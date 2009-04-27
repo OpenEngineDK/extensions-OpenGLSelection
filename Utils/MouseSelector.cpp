@@ -20,10 +20,13 @@
 #include <Math/Math.h>
 #include <Display/OrthogonalViewingVolume.h>
 
+#include <Scene/ISceneNode.h>
+
 #include <Geometry/Tests.h>
 #include <Geometry/Ray.h>
 #include <Geometry/Box.h>
 
+#include <Scene/SearchTool.h>
 #include <Logging/Logger.h>
 
 namespace OpenEngine {
@@ -39,15 +42,17 @@ using Geometry::Line;
 using Geometry::Tests;
 using Geometry::Ray;
 using Geometry::Box;
+using Scene::SearchTool;
 
-MouseSelector::MouseSelector (IFrame& frame, IMouse& mouse, TransformationSelector& ts)
+MouseSelector::MouseSelector (IFrame& frame, 
+                              IMouse& mouse, 
+                              SelectionSet<ISceneNode>& sset,
+                              ISceneNode* root)
     : frame(frame) 
     , mouse(mouse)
-    , ts(ts)
-    , rotationDepth(10.0)
+    , sset (sset)
+    , root (root)
     , activeViewport(NULL)
-    , plane(Vector<3,float>(1.0,1.0,1.0), Vector<3,float>(0.0,0.0,0.0))
-    , moving(false)
     , down_x(-1)
     , down_y(-1)
 {
@@ -57,10 +62,6 @@ MouseSelector::~MouseSelector() {
 }
 
 void MouseSelector::Handle(MouseMovedEventArg arg) {
-    if (arg.buttons & BUTTON_LEFT && moving) {
-            MoveSelected(arg.x, frame.GetHeight()-arg.y);
-            return;
-    }
     // find the active viewport
     if (activeViewport == NULL || !IsViewportActive(activeViewport, arg.x, arg.y)) {
         // dont find new viewport if mouse button is pressed
@@ -75,77 +76,47 @@ void MouseSelector::Handle(MouseMovedEventArg arg) {
             }
         }
     }
-
-    if (!activeViewport) return;
-
-    int dx = arg.dx;//(arg.x - mx);
-    int dy = arg.dy;//(arg.y - my);
-
-    if (arg.buttons & BUTTON_RIGHT ) {
-        Rotate(0.1*dx, 0.1*dy);
-        return;
-    }
-
-
 }
 
 void MouseSelector::Handle(MouseButtonEventArg arg) {
     if (!activeViewport) return;
 
-    // @todo: fairly messy branching. clean up needed!
-
     if (arg.type == EVENT_PRESS) {
         if (arg.button & BUTTON_WHEEL_UP)   { ZoomIn();  } 
         if (arg.button & BUTTON_WHEEL_DOWN) { ZoomOut(); } 
         if (arg.button & BUTTON_LEFT) {
-            tmpsel = ts.SelectPoint(arg.state.x, 
-                                    frame.GetHeight()-arg.state.y,
-                                    *activeViewport);
-            if (tmpsel.empty()) {
-                down_x = arg.state.x;
-                down_y = arg.state.y;
-                moving = false;
-            }
-            else {
-                if (selection.empty()) {
-                    moving = false;
-                    down_x = arg.state.x;
-                    down_y = arg.state.y;
-                }
-                else {
-                    down_x = arg.state.x;
-                    down_y = arg.state.y;
-                    InitMoveSelected(arg.state.x, frame.GetHeight()-arg.state.y, GetSelectionPos());
-                    moving = true;
-                }
-            }
+            down_x = arg.state.x;
+            down_y = arg.state.y;
         }
     }
     if (arg.type == EVENT_RELEASE) {
         if (arg.button & BUTTON_LEFT) {
+            sset.Clear();
             if (down_x == arg.state.x && down_y == arg.state.y) {
-                selection.clear();
-                if (!tmpsel.empty()) {
+                list<ISceneNode*> sel = scenesel.SelectPoint(arg.state.x,
+                                                             frame.GetHeight()-arg.state.y,
+                                                             root, *activeViewport);
+                if (!sel.empty()) {
                     // select only the topmost element.
-                    tmpsel.resize(1);
-                    selection = tmpsel;
+                    sset.Select(sel.front());
                 }
-                down_x = down_y = -1;
             }
             else {
-                if (!moving) {
-                    selection = ts.SelectRegion(down_x, 
-                                                frame.GetHeight()-down_y, 
-                                                arg.state.x, 
-                                                frame.GetHeight()-arg.state.y, 
-                                                *activeViewport);
-//                     if (!selection.empty()) {
-//                         // logger.info << "HIT: " << selection.size() << logger.end;
-//                     }
-                    down_x = down_y = -1;
+                
+                list<ISceneNode*> sel = scenesel.SelectRegion(down_x,
+                                                              frame.GetHeight()-down_y,
+                                                              arg.state.x,
+                                                              frame.GetHeight()-arg.state.y,
+                                                              root, *activeViewport);
+                for (list<ISceneNode*>::iterator itr = sel.begin();
+                     itr != sel.end();
+                     itr++) {
+                    sset.AddToSelection(*itr);
+                    //logger.info << "hit" << logger.end;
                 }
             }
         }
+        down_x = down_y = -1;
     }
 }
 
@@ -172,19 +143,28 @@ void MouseSelector::Handle(RenderingEventArg arg) {
         //        - store bounding boxes.
         //        - only calculate transformations once.
         colr = Vector<3,float> (0.0,0.0,1.0);
-        for (list<TransformationNode*>::iterator itr = selection.begin();
-             itr != selection.end(); 
+        set<ISceneNode*> sel = sset.GetSelection();
+        for (set<ISceneNode*>::iterator itr = sel.begin();
+             itr != sel.end(); 
              itr++) {
+            
             Box b(**itr);
             Vector<3,float> p;
             Quaternion<float> q;
-            (*itr)->GetAccumulatedTransformations(&p, &q);
+            Vector<3,float> s;
             
+            SearchTool st;
+            TransformationNode* t;
+            t = st.AncestorTransformationNode(*itr);
+            if (t) {
+                t->GetAccumulatedTransformations(&p, &q, &s);
+            }
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             glTranslatef(p[0], p[1], p[2]);
             p = q.GetImaginary();
             glRotatef(q.GetReal(), p[0], p[1], p[2]);
+            glScalef(s[0], s[1], s[2]);
             size = 1;
             
             for (int i = 0; i < 8; i++) {
@@ -198,7 +178,7 @@ void MouseSelector::Handle(RenderingEventArg arg) {
         }
     }
     
-    if (down_x == -1 || !activeViewport || moving) return;
+    if (down_x == -1) return;// || !activeViewport || moving) return;
     //draw selection region
     //@todo: do not use opengl directly. optimize coordinate calculations?
     Vector<4,int> d = activeViewport->GetDimension();
@@ -248,22 +228,22 @@ void MouseSelector::Handle(RenderingEventArg arg) {
 
 }
     
-void MouseSelector::InitMoveSelected(float x, float y, Vector<3,float> startPos) {
-    // construct plane and calc initial ray intersection
-    plane = Plane(activeViewport->GetViewingVolume()->
-                  GetDirection().RotateVector(Vector<3,float>(0.0,0.0,1.0)),
-                  startPos);
-    Tests::Intersects(ts.GetProjectedRay(x, y, *activeViewport), plane, &startp);       
-}
+// void MouseSelector::InitMoveSelection(float x, float y, Vector<3,float> startPos) {
+//     // construct plane and calc initial ray intersection
+//     plane = Plane(activeViewport->GetViewingVolume()->
+//                   GetDirection().RotateVector(Vector<3,float>(0.0,0.0,1.0)),
+//                   startPos);
+//     Tests::Intersects(ts.GetProjectedRay(x, y, *activeViewport), plane, &startp);       
+// }
 
-void MouseSelector::MoveSelected(float x, float y) {
-    // move selected object according to plane and ray intersection
-    Vector<3,float> tmppos;
-    Tests::Intersects(plane, ts.GetProjectedRay(x, y, *activeViewport), &tmppos);
-    Vector<3,float> dpos = tmppos-startp;
-    startp = tmppos;
-    MoveSelection (dpos);
-}
+// void MouseSelector::MoveSelection(float x, float y) {
+//     // move selected object according to plane and ray intersection
+//     Vector<3,float> tmppos;
+//     Tests::Intersects(plane, ts.GetProjectedRay(x, y, *activeViewport), &tmppos);
+//     Vector<3,float> dpos = tmppos-startp;
+//     startp = tmppos;
+//     MoveSelection (dpos);
+// }
 
 bool MouseSelector::IsViewportActive(Viewport* viewport, int x, int y) {
     Vector<4,int> dim = viewport->GetDimension();
@@ -293,23 +273,23 @@ void MouseSelector::ZoomOut() {
                     cam.GetDirection().RotateVector(Vector<3,float>(0.0,0.0,-1.0))*20);
 }
     
-void MouseSelector::Rotate(float dx, float dy) {
-    Camera cam(*activeViewport->GetViewingVolume());
+// void MouseSelector::Rotate(float dx, float dy) {
+//     Camera cam(*activeViewport->GetViewingVolume());
     
-    Vector<3,float>   target = cam.GetPosition();
-    Quaternion<float> rot = cam.GetDirection().GetNormalize();
-    target += rot.RotateVector(Vector<3,float>(0.0,0.0,-1.0))*rotationDepth;
-    Vector<3,float> dir = target - cam.GetPosition();
+//     Vector<3,float>   target = cam.GetPosition();
+//     Quaternion<float> rot = cam.GetDirection().GetNormalize();
+//     target += rot.RotateVector(Vector<3,float>(0.0,0.0,-1.0))*rotationDepth;
+//     Vector<3,float> dir = target - cam.GetPosition();
     
-    Quaternion<float> q1(0.05*dx, rot.RotateVector(Vector<3,float>(0.0,1.0,0.0)));
-    q1.Normalize();
+//     Quaternion<float> q1(0.05*dx, rot.RotateVector(Vector<3,float>(0.0,1.0,0.0)));
+//     q1.Normalize();
 
-    Quaternion<float> q2(0.05*dy, rot.RotateVector(Vector<3,float>(1.0,0.0,0.0)));
-    q2.Normalize();
+//     Quaternion<float> q2(0.05*dy, rot.RotateVector(Vector<3,float>(1.0,0.0,0.0)));
+//     q2.Normalize();
     
-    cam.SetPosition(target - q1.RotateVector(q2.RotateVector(dir)));
-    cam.LookAt(target);
-}
+//     cam.SetPosition(target - q1.RotateVector(q2.RotateVector(dir)));
+//     cam.LookAt(target);
+// }
 
 void MouseSelector::MoveCamera(float dx, float dy) {
     Camera cam(*activeViewport->GetViewingVolume());
@@ -324,26 +304,33 @@ void MouseSelector::MoveCamera(float dx, float dy) {
 
 
 // selection manipulation
-Vector<3,float> MouseSelector::GetSelectionPos() {
-    if (selection.empty())
-        return Vector<3,float>(); // Exception maybe?
-
-    Vector<3,float> acc;
-    for (list<TransformationNode*>::iterator itr = selection.begin();
-         itr != selection.end();
-         itr++) 
-        acc += (*itr)->GetPosition();
-    acc *= 1/selection.size();
-    return selection.front()->GetPosition();
+void MouseSelector::SetSelectionSet(SelectionSet<ISceneNode*>& sset) {
+    sset = sset;
 }
 
-void MouseSelector::MoveSelection(Vector<3,float> dpos) {
-    for (list<TransformationNode*>::iterator itr = selection.begin();
-         itr != selection.end();
-         itr ++)
-        (*itr)->SetPosition ((*itr)->GetPosition() + dpos);
-}
+// Vector<3,float> MouseSelector::GetSelectionPos() {
+//     if (selection.empty())
+//         return Vector<3,float>(); // Exception maybe?
 
+//     Vector<3,float> acc;
+//     for (list<TransformationNode*>::iterator itr = selection.begin();
+//          itr != selection.end();
+//          itr++) 
+//         acc += (*itr)->GetPosition();
+//     acc *= 1/selection.size();
+//     return selection.front()->GetPosition();
+// }
+
+// void MouseSelector::MoveSelection(Vector<3,float> dpos) {
+//     for (list<TransformationNode*>::iterator itr = selection.begin();
+//          itr != selection.end();
+//          itr ++)
+//         (*itr)->SetPosition ((*itr)->GetPosition() + dpos);
+// }
+
+void MouseSelector::SetScene(ISceneNode* scene) {
+    root = scene;
+}
 
 } // NS Utils
 } // NS OpenEngine

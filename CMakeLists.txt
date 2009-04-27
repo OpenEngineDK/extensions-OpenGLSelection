@@ -5,6 +5,8 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Utils/MouseSelector.cpp
   Utils/TransformationSelector.h
   Utils/TransformationSelector.cpp
+  Utils/SceneSelector.h
+  Utils/SceneSelector.cpp
 )
 
 TARGET_LINK_LIBRARIES( ${EXTENSION_NAME}

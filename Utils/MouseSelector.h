@@ -23,12 +23,10 @@
 
 
 // selection tools
-#include <Utils/TransformationSelector.h>
-//#include "SelectionHandler.h"
-//#include "LineNode.h"
+#include <Utils/SceneSelector.h>
+#include <Utils/SelectionSet.h>
 
 #include <Geometry/Plane.h>
-
 
 #include <list>
 // #include <stack>
@@ -41,7 +39,7 @@ namespace OpenEngine {
         class IFrame;
     }
 //     namespace Scene {
-//         class TransformationNode;
+//         class ISceneNode;
 //     }
 
 //     namespace Geometry {
@@ -67,10 +65,9 @@ using Scene::ISceneNodeVisitor;
 using Scene::ISceneNode;
 using Scene::GeometryNode;
 
-using Utils::TransformationSelector;
-
+using Utils::SceneSelector;
+using Utils::SelectionSet;
 using std::list;
-// using std::stack;
 
 /**
  * Select objects using the mouse.
@@ -80,31 +77,32 @@ using std::list;
 class MouseSelector : public IListener<MouseMovedEventArg> 
                     , public IListener<MouseButtonEventArg>
                     , public IListener<RenderingEventArg> 
-
 {
 private:
     IFrame& frame;
     IMouse& mouse;
-    TransformationSelector& ts;
-    float rotationDepth;
-    list<TransformationNode*> selection, tmpsel;
+    SelectionSet<ISceneNode>& sset;
+    SceneSelector scenesel;
+    ISceneNode* root;
+//     float rotationDepth;
+//     list<TransformationNode*> tmpsel;
+
     Viewport* activeViewport;
     list<Viewport*> viewports;
 
     // temporary plane intersection fields
-    Plane plane;
-    Vector<3,float> startp;
-    bool moving;
+//     Plane plane;
+//     Vector<3,float> startp;
+//     bool moving;
 
-    //SelectionHandler sh;
     int down_x, down_y;
 
-    void InitMoveSelected(float x, float y, Vector<3,float> startPos);
-    void MoveSelected(float x, float y);
+//     void InitMoveSelection(float x, float y, Vector<3,float> startPos);
+//     void MoveSelection(float x, float y);
     bool IsViewportActive(Viewport* viewport, int x, int y);
 
-    Vector<3,float> GetSelectionPos();
-    void MoveSelection(Vector<3,float> dpos);
+//     Vector<3,float> GetSelectionPos();
+//     void MoveSelection(Vector<3,float> dpos);
 
     // camera handling routines
     // Should not be in this class!!!
@@ -115,7 +113,7 @@ private:
 
 public:
 
-    MouseSelector(IFrame& frame, IMouse& mouse, TransformationSelector& ts);
+    MouseSelector(IFrame& frame, IMouse& mouse, SelectionSet<ISceneNode>& sset, ISceneNode* root);
     virtual ~MouseSelector();
 
     void Handle(MouseMovedEventArg arg);
@@ -123,6 +121,8 @@ public:
     void Handle(RenderingEventArg arg);
 
     void AddViewport(Viewport* viewport);
+    void SetSelectionSet(SelectionSet<ISceneNode*>& sset);
+    void SetScene(ISceneNode* scene);
 };
 
 } // NS Utils
