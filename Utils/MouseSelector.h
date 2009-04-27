@@ -10,6 +10,7 @@
 #ifndef _OE_UTILS_MOUSE_SELECTOR_
 #define _OE_UTILS_MOUSE_SELECTOR_
 
+#include <Meta/OpenGL.h>
 #include <Core/IListener.h>
 #include <Devices/IMouse.h>
 #include <Renderers/IRenderer.h>

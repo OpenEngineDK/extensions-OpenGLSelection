@@ -76,6 +76,17 @@ void MouseSelector::Handle(MouseMovedEventArg arg) {
             }
         }
     }
+    if (!activeViewport) return;
+
+    int dx = arg.dx;//(arg.x - mx);
+    int dy = arg.dy;//(arg.y - my);
+        MoveCamera(0.1*dx, 0.1*dy);
+
+    if (arg.buttons & BUTTON_RIGHT ) {
+        logger.info << "move" << logger.end;
+        return;
+    }
+
 }
 
 void MouseSelector::Handle(MouseButtonEventArg arg) {
@@ -178,7 +189,7 @@ void MouseSelector::Handle(RenderingEventArg arg) {
         }
     }
     
-    if (down_x == -1) return;// || !activeViewport || moving) return;
+    if (down_x == -1 || !activeViewport) return;//  || moving) return;
     //draw selection region
     //@todo: do not use opengl directly. optimize coordinate calculations?
     Vector<4,int> d = activeViewport->GetDimension();
