@@ -72,7 +72,7 @@ Ray TransformationSelector::GetProjectedRay(int x, int y, Viewport& viewport) {
     
     float fproj[16];
     float fmodelview[16];
-    viewport.GetDimension().ToArray(viewport_arr);
+    viewport.GetDimension().ToArray((int*)viewport_arr);
     volume->GetProjectionMatrix().ToArray(fproj);
     volume->GetViewMatrix().ToArray(fmodelview);
 

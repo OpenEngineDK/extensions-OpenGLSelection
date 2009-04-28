@@ -107,7 +107,7 @@ private:
             glInitNames();
             
             // setup projection matrix 
-            viewport.GetDimension().ToArray(viewport_arr);
+            viewport.GetDimension().ToArray((int*)viewport_arr);
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
             gluPickMatrix((GLdouble)x, (GLdouble)(y),
@@ -142,7 +142,7 @@ private:
             // create an ordered list of selected transformation nodes
             hitlist.clear();
             hittuples.clear();
-            unsigned int* ptr = selectBuf;
+            unsigned int* ptr = (unsigned int*)selectBuf;
             for (int i = 0; i < hits; i++) {
                 int namesInHit = *(ptr++);
                     unsigned int z1 = *ptr++;

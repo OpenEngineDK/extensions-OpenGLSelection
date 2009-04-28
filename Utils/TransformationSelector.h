@@ -129,7 +129,7 @@ private:
             glInitNames();
 
             // setup projection matrix 
-            viewport.GetDimension().ToArray(viewport_arr);
+            viewport.GetDimension().ToArray((int*)viewport_arr);
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
             gluPickMatrix((GLdouble)x, (GLdouble)(y),
@@ -165,7 +165,7 @@ private:
             // @todo: optimize sorting
             hitlist.clear();
             hittuples.clear();
-            unsigned int* ptr = selectBuf;
+            unsigned int* ptr = (unsigned int*)selectBuf;
             for (int i = 0; i < hits; i++) {
                 int namesInHit = *(ptr++);
                 for (int j = 0; j < namesInHit; j++) {
