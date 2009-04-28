@@ -78,12 +78,8 @@ void MouseSelector::Handle(MouseMovedEventArg arg) {
     }
     if (!activeViewport) return;
 
-    int dx = arg.dx;//(arg.x - mx);
-    int dy = arg.dy;//(arg.y - my);
-        MoveCamera(0.1*dx, 0.1*dy);
-
     if (arg.buttons & BUTTON_RIGHT ) {
-        logger.info << "move" << logger.end;
+        MoveCamera(0.2*arg.dx, 0.2*arg.dy);
         return;
     }
 
@@ -133,12 +129,10 @@ void MouseSelector::Handle(MouseButtonEventArg arg) {
 
 void MouseSelector::Handle(RenderingEventArg arg) {
     IRenderer& r = arg.renderer;
-    
     // reusable locals
     float size;
     Vector<3,float> colr;
     Line l(colr, colr);
-
     // for each viewport ...
     for (list<Viewport*>::iterator vpitr = viewports.begin();
          vpitr != viewports.end();
@@ -158,12 +152,10 @@ void MouseSelector::Handle(RenderingEventArg arg) {
         for (set<ISceneNode*>::iterator itr = sel.begin();
              itr != sel.end(); 
              itr++) {
-            
             Box b(**itr);
             Vector<3,float> p;
             Quaternion<float> q;
-            Vector<3,float> s;
-            
+            Vector<3,float> s(1);
             SearchTool st;
             TransformationNode* t;
             t = st.AncestorTransformationNode(*itr);
@@ -177,7 +169,6 @@ void MouseSelector::Handle(RenderingEventArg arg) {
             glRotatef(q.GetReal(), p[0], p[1], p[2]);
             glScalef(s[0], s[1], s[2]);
             size = 1;
-            
             for (int i = 0; i < 8; i++) {
                 for (int j = i; j < 8; j++) {
                     if (i == j) continue;
@@ -194,22 +185,17 @@ void MouseSelector::Handle(RenderingEventArg arg) {
     //@todo: do not use opengl directly. optimize coordinate calculations?
     Vector<4,int> d = activeViewport->GetDimension();
     glViewport((GLsizei)d[0], (GLsizei)d[1], (GLsizei)d[2], (GLsizei)d[3]);
-    
     OrthogonalViewingVolume ortho(1.0f, 2.0f, d[0]/*left*/, d[0]+d[2]/*right*/, 
                                   frame.GetHeight()-d[1]-d[3]/*top*/,
                                   frame.GetHeight()-d[1]/*bottom*/);
-    
     r.ApplyViewingVolume(ortho);
-    
     int x = mouse.GetState().x;
     int y = mouse.GetState().y;
-    
     glPushAttrib(GL_LIGHTING);
     glDisable(GL_LIGHTING);
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    
     glBegin(GL_QUADS);
     glColor4f(0.0,0.0,1.0,0.3);
     glVertex3f(down_x, down_y, -1.0);
@@ -218,7 +204,7 @@ void MouseSelector::Handle(RenderingEventArg arg) {
     glVertex3f(down_x, y, -1.0);
     glEnd();
     glPopAttrib();
-    
+
     colr = Vector<3,float>(0.0,0.0,1.0);
     size = 1;
     l = Line(Vector<3,float> (down_x, down_y, -1.0), 
