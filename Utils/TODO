@@ -1,0 +1,32 @@
+* SelectionTool *
+
+* TransformationTool *
+- Size of axes should be proportional to distance between camera and object.
+- (PARTIALLY DONE!) Make axes look nice by rendering cylinders and cones.
+- (PARTIALLY DONE!) Dragging an axis should involve projection to 2d and movent should
+  increase when dragging mouse in the (2d) direction of the axis.
+- axes should always point in x, y, z world coordinates
+  direction. This means that transformations should zero out rotations.
+- DONE! -- fix transformation node selection so that scene graph is not
+  (observationaly) modified.
+- DONE! Make sure that all selected object are affected by transformations. 
+- introduce floating button graphics over selection to change
+  transformation mode (translate, rotate, scale). Consider if buttons
+  should fade away or be activated in a certain way (they should not
+  block the view!)
+
+- create toolchain abstraction containing multiple tools.
+
+- create button collection abstraction to hide away ugly code
+
+- create plugable transform strategies to switch between translation, rotation 
+  and scaling (note: this may also cause different visualization of the tool.
+
+- IDEA: Each viewport should be associated with it's own unique toolchain.
+        Only Render tools on the active viewport?
+
+- Consider not using an event queue and simply fire events instantaniously.
+  would eliminate construction and destruction of events.
+* CameraTool *
+
+introduce meta buttons to activate camera rotation and movement.
