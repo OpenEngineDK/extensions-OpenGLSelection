@@ -1,12 +1,17 @@
 SET( EXTENSION_NAME "Extensions_OpenGLSelection")
 
 ADD_LIBRARY( ${EXTENSION_NAME}
-  Utils/MouseSelector.h
-  Utils/MouseSelector.cpp
-  Utils/TransformationSelector.h
-  Utils/TransformationSelector.cpp
-  Utils/SceneSelector.h
-  Utils/SceneSelector.cpp
+  Utils/MouseSelection.h
+  Utils/MouseSelection.cpp
+  Utils/ISceneSelection.h
+  Utils/GLSceneSelection.h
+  Utils/GLSceneSelection.cpp
+  Utils/PointingDevice.h
+  Utils/ITool.h
+  Utils/SelectionTool.h
+  Utils/SelectionTool.cpp
+  Utils/TransformationTool.h
+  Utils/TransformationTool.cpp
 )
 
 TARGET_LINK_LIBRARIES( ${EXTENSION_NAME}
