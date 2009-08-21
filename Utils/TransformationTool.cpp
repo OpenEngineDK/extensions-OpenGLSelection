@@ -363,13 +363,11 @@ TransformationTool::AxisWidget::~AxisWidget() {
 }
 
 void TransformationTool::AxisWidget::Render(IViewingVolume& vv, ISceneNode* context, bool rotate) {
-    ISceneNode* dummyNode;
     list<TransformationNode*> nodes;
-
     Vector<3,float> p;
     Quaternion<float> q;
     SearchTool st;
-    TransformationNode* t = st.AncestorTransformationNode(dummyNode, true);
+    TransformationNode* t = st.AncestorTransformationNode(context, true);
     if (t) t->GetAccumulatedTransformations(&p, &q); 
 
     if (rotate) {
