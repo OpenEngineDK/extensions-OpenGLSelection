@@ -9,7 +9,6 @@
 
 #include <Utils/GLSceneSelection.h>
 
-#include <Scene/SearchTool.h>
 #include <Scene/ISceneNode.h>
 #include <Scene/SceneNode.h>
 #include <Scene/TransformationNode.h>
@@ -154,12 +153,12 @@ list<ISceneNode*> GLSceneSelection::SelectionRenderer::Render(Viewport& viewport
         // WOULD INCLUDE THE STARTING NODE. WE SHOULD NOT MODIFY THE CONTEXT NODE
         // BY ADDING SOMETHING AND REMOVING IT AGAIN!
         //@todo FIX SEARCHTOOL
-        SearchTool st;
-        ISceneNode* dummyNode = new SceneNode();
-        context->AddNode(dummyNode);
-        nodes = st.AncestorTransformationNodes(dummyNode);
-        context->RemoveNode(dummyNode);
-        delete dummyNode;
+        // SearchTool st;
+        // ISceneNode* dummyNode = new SceneNode();
+        // context->AddNode(dummyNode);
+        nodes = st.AncestorTransformationNodes(context,true);
+        // context->RemoveNode(dummyNode);
+        // delete dummyNode;
         /// ****** UGLY CODE END ******
         for (list<TransformationNode*>::reverse_iterator tn = nodes.rbegin();
              tn != nodes.rend();

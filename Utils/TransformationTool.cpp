@@ -156,6 +156,7 @@ bool TransformationTool::Handle(PointingDevice::ReleasedEventArg arg) {
 }
 
 void TransformationTool::Handle(SelectionSet<ISceneNode>::ChangedEventArg arg) {
+    // @todo: consider which strategy to use (first common transformation node?)
     // For each element in SelectionSet we see if itself or its parent
     // is a transformation node and add it to our private list.
     selection.clear();
@@ -368,26 +369,11 @@ void TransformationTool::AxisWidget::Render(IViewingVolume& vv, ISceneNode* cont
     Vector<3,float> p;
     Quaternion<float> q;
     SearchTool st;
-    dummyNode = new SceneNode();
-    context->AddNode(dummyNode);
-    TransformationNode* t = st.AncestorTransformationNode(dummyNode);
-    context->RemoveNode(dummyNode);
-    delete dummyNode;
+    TransformationNode* t = st.AncestorTransformationNode(dummyNode, true);
     if (t) t->GetAccumulatedTransformations(&p, &q); 
 
     if (rotate) {
-        //*** UGLY CODE BEGIN ****
-        // THIS CODE CAN BE AVOIDED IF SEARCHTOOL:ANCESTORTRANSFORMATIONNODES 
-        // WOULD INCLUDE THE STARTING NODE. WE SHOULD NOT MODIFY THE CONTEXT NODE
-        // BY ADDING SOMETHING AND REMOVING IT AGAIN!
-        //@todo FIX SEARCHTOOL
-        SearchTool st;
-        dummyNode = new SceneNode();
-        context->AddNode(dummyNode);
-        nodes = st.AncestorTransformationNodes(dummyNode);
-        context->RemoveNode(dummyNode);
-        delete dummyNode;
-        /// ****** UGLY CODE END ******
+        nodes = st.AncestorTransformationNodes(context, true);
         for (list<TransformationNode*>::reverse_iterator tn = nodes.rbegin();
              tn != nodes.rend();
              tn++) {
@@ -403,16 +389,13 @@ void TransformationTool::AxisWidget::Render(IViewingVolume& vv, ISceneNode* cont
     else {
         xaxis->pos = yaxis->pos = zaxis->pos = p;
     }
-    
     float size = (p-vv.GetPosition()).GetLength()/100;
     xaxis->size = yaxis->size = zaxis->size = size;
-    //xaxis->rot = yaxis->rot = zaxis->rot = q;
     xaxis->Apply(NULL);
     yaxis->Apply(NULL);
     zaxis->Apply(NULL);
     for (unsigned int i = 0; i < nodes.size(); i++)
         glPopMatrix();
-    
 }
 
 bool TransformationTool::AxisWidget::GrabAxis(int x, int y, int offset, ISceneSelection& select, Scene::ISceneNode* context, Display::Viewport& vp, Vector<3,float>& dir) {

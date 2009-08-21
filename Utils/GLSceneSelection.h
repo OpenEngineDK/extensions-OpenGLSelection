@@ -12,6 +12,7 @@
 
 #include <Utils/ISceneSelection.h>
 #include <Scene/ISceneNodeVisitor.h>
+#include <Scene/SearchTool.h>
 #include <Meta/OpenGL.h>
 #include <vector>
 #include <list>
@@ -48,6 +49,7 @@ private:
         static bool hit_compare(HitTuple& h1, HitTuple& h2) {
             return h1.z1 < h2.z1;
         }
+        Scene::SearchTool st;
         unsigned int count;
         std::vector<Scene::ISceneNode*> names; //mapping from name to transformation node
         std::list<HitTuple> hittuples; 
