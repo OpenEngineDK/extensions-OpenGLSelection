@@ -19,7 +19,6 @@
 #include <Display/IViewingVolume.h>
 #include <Geometry/Tests.h>
 #include <Geometry/Ray.h>
-#include <Meta/OpenGL.h>
 #include <Resources/ITextureResource.h>
 #include <Resources/DirectoryManager.h>
 #include <Resources/ResourceManager.h>
@@ -309,49 +308,53 @@ void TransformationTool::Button::Apply(Renderers::IRenderingView* rv) {
     glEnd();    
 }
 
-TransformationTool::AxisWidget::Axis::Axis(Vector<3,float> dir, Vector<4,float> colr): dir(dir), colr(colr) {
+TransformationTool::AxisWidget::Axis::Axis(float rot, 
+                                           Vector<3,float> rotaxis, 
+                                           Vector<3,float> dir, 
+                                           Vector<4,float> colr): 
+    quadr(gluNewQuadric()),
+    rot(rot), rotaxis(rotaxis), dir(dir), colr(colr) {
+    gluQuadricNormals(quadr, GLU_SMOOTH);
+}
+
+TransformationTool::AxisWidget::Axis::~Axis() {
+    gluDeleteQuadric(quadr);
+} 
+
+
+TransformationTool::AxisWidget::XAxis::XAxis(): 
+    Axis(90.0f, Vector<3,float>(0.0,1.0,0.0), Vector<3,float>(1.0,0.0,0.0), Vector<4,float> (1.0,0.0,0.0,0.8))
+{
+}
+
+TransformationTool::AxisWidget::YAxis::YAxis(): 
+    Axis(-90.0f, Vector<3,float>(1.0,0.0,0.0), Vector<3,float>(0.0,1.0,0.0), Vector<4,float> (0.0,1.0,0.0,0.8))
+{
+}
+
+TransformationTool::AxisWidget::ZAxis::ZAxis(): 
+    Axis(0.0f, Vector<3,float>(0.0), Vector<3,float>(0.0,0.0,1.0), Vector<4,float> (0.0,0.0,1.0,0.8))
+{
 }
 
 void TransformationTool::AxisWidget::Axis::Apply(Renderers::IRenderingView* rv) {
     glPushMatrix();
-    glColor4f(colr[0], colr[1], colr[2], 0.9);//colr[3]);
-    Vector<3,float> d = dir;
-    float a = 0.0;
-    if (d[0] != 0) {
-        d[0] = 0;
-        d[1] = 1;
-        a = 90.0f;
-    }
-    else if (d[1] != 0) {
-        d[0] = 1;
-        d[1] = 0;
-        a = -90.0f;
-    }
-    GLUquadricObj* q = gluNewQuadric();
-    gluQuadricNormals(q, GLU_SMOOTH);
-    // float r = (rot.GetReal()*180.0f)/PI;
-    // Vector<3,float> i = rot.GetImaginary();
-    // glRotatef(r, i[0], i[1], i[2]);
-    glTranslatef(pos[0], pos[1], pos[2]);
+    glColor4f(colr[0], colr[1], colr[2], colr[3]);
     glPushMatrix();
-    glRotatef(a, d[0], d[1], d[2]);
-    gluCylinder(q, 0.25*size, 0.25*size, 10*size, 10*size, 10*size);
+    glRotatef(rot, rotaxis[0], rotaxis[1], rotaxis[2]);
+    gluCylinder(quadr, 0.25, 0.40, 10, 10, 10);
     glPopMatrix();
-    glTranslatef(dir[0]*size, dir[1]*size, dir[2]*size);
-    glRotatef(a, d[0], d[1], d[2]);
-    gluCylinder(q, 1.0*size, 0.0, 3.0*size, 20*size, 10*size);
-    gluDeleteQuadric(q);
+    glTranslatef(10*dir[0], 10*dir[1], 10*dir[2]);
+    glRotatef(rot, rotaxis[0], rotaxis[1], rotaxis[2]);
+    gluCylinder(quadr, 1.0, 0.0, 3.0, 20, 10);
     glPopMatrix();
 }
 
 TransformationTool::AxisWidget::AxisWidget(): 
     axes(new SceneNode())
-    , xaxis(new Axis(Vector<3,float>(10.0,0.0,0.0), 
-                     Vector<4,float>(1.0,0.0,0.0,0.6)))
-    , yaxis(new Axis(Vector<3,float>(0.0,10.0,0.0),
-                     Vector<4,float>(0.0,1.0,0.0,0.6)))
-    , zaxis(new Axis(Vector<3,float>(0.0,0.0,10.0), 
-                     Vector<4,float>(0.0,0.0,1.0,0.6)))
+    , xaxis(new XAxis())
+    , yaxis(new YAxis())
+    , zaxis(new ZAxis())
 {
     axes->AddNode(xaxis);
     axes->AddNode(yaxis);
@@ -363,47 +366,49 @@ TransformationTool::AxisWidget::~AxisWidget() {
 }
 
 void TransformationTool::AxisWidget::Render(IViewingVolume& vv, ISceneNode* context, bool rotate) {
-    list<TransformationNode*> nodes;
+    SearchTool st;
     Vector<3,float> p;
     Quaternion<float> q;
-    SearchTool st;
     TransformationNode* t = st.AncestorTransformationNode(context, true);
     if (t) t->GetAccumulatedTransformations(&p, &q); 
-
-    if (rotate) {
-        nodes = st.AncestorTransformationNodes(context, true);
-        for (list<TransformationNode*>::reverse_iterator tn = nodes.rbegin();
-             tn != nodes.rend();
-             tn++) {
-            float f[16];
-            (*tn)->GetTransformationMatrix().ToArray(f);
-            glPushMatrix();
-            CHECK_FOR_GL_ERROR();
-            glMultMatrixf(f);
-            CHECK_FOR_GL_ERROR();
-        }
-        xaxis->pos = yaxis->pos = zaxis->pos = Vector<3,float>(0.0);
-    }
-    else {
-        xaxis->pos = yaxis->pos = zaxis->pos = p;
-    }
+    TransformationNode tmpn;
+    tmpn.SetPosition(p);
+    if (rotate) 
+        tmpn.SetRotation(q);
     float size = (p-vv.GetPosition()).GetLength()/100;
-    xaxis->size = yaxis->size = zaxis->size = size;
+    tmpn.Scale(size, size, size);
+    float f[16];
+    tmpn.GetTransformationMatrix().ToArray(f);
+    glPushMatrix();
+    CHECK_FOR_GL_ERROR();
+    glMultMatrixf(f);
+    CHECK_FOR_GL_ERROR();
     xaxis->Apply(NULL);
     yaxis->Apply(NULL);
     zaxis->Apply(NULL);
-    for (unsigned int i = 0; i < nodes.size(); i++)
-        glPopMatrix();
+    glPopMatrix();
 }
 
-bool TransformationTool::AxisWidget::GrabAxis(int x, int y, int offset, ISceneSelection& select, Scene::ISceneNode* context, Display::Viewport& vp, Vector<3,float>& dir) {
+bool TransformationTool::AxisWidget::GrabAxis(int x, int y, int offset, ISceneSelection& select, Scene::ISceneNode* context, Display::Viewport& vp, Vector<3,float>& dir, bool rotate) {
+    SearchTool st;
+    Vector<3,float> p;
+    Quaternion<float> q;
+    TransformationNode* t = st.AncestorTransformationNode(context, true);
+    if (t) t->GetAccumulatedTransformations(&p, &q); 
+    TransformationNode tmpn;
+    tmpn.SetPosition(p);
+    if (rotate) 
+        tmpn.SetRotation(q);
+    IViewingVolume* vv = vp.GetViewingVolume();
+    float size = (p-vv->GetPosition()).GetLength()/100;
+    tmpn.Scale(size, size, size);
     list<ISceneNode*> s = select.SelectRegion(x - offset,
                                               y - offset,
                                               x + offset,
                                               y + offset,
                                               axes, 
                                               vp,
-                                              context);
+                                              &tmpn);
     // check for arrow hit
     if (s.empty()) return false;
     Axis* axis = NULL;
@@ -521,9 +526,6 @@ bool TransformationTool::TranslationStrategy::Transform(int x,
         Vector<3,float> d = dir.GetNormalize() * (axisproj * dmouse) * ratio;
         Vector<3,float> p;
         Quaternion<float> q;
-        // (*selection.begin())->GetAccumulatedTransformations(&p, &q);
-        // q.Normalize();
-        //d = q.RotateVector(d);
         for (set<TransformationNode*>::iterator itr = selection.begin();
              itr != selection.end();
              itr++) {
@@ -547,12 +549,12 @@ bool TransformationTool::TranslationStrategy::GrabWidget(int x,
                                                          set<TransformationNode*> selection,
                                                          Viewport& vp) {
     int offset = 2;
-    axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, NULL, vp, dir);
-    if (!axisgrabbed)
-        return false;    
     Vector<3,float> p;
     Quaternion<float> q;
     (*selection.begin())->GetAccumulatedTransformations(&p, &q);
+    axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir, false);
+    if (!axisgrabbed)
+        return false;    
     axisproj = select.Project(p + dir, vp) 
         - select.Project(p, vp); 
     if (axisproj.IsZero()) 
@@ -616,10 +618,9 @@ bool TransformationTool::RotationStrategy::Transform(int x,
     if (axisgrabbed) {
         Vector<2,float> dmouse = Vector<2,float>(x, y) - mouse;
         mouse = Vector<2,float>(x, y);
-        float sign = 1;
-        //logger.info << "val: " << axisproj*dmouse << logger.end;
+        float sign = 1.0f;
         if (axisproj * dmouse < 0) 
-            sign = -1;
+            sign = -1.0f;
         Vector<3,float> d = sign * dir.GetNormalize();
         Vector<3,float> p;
         Quaternion<float> q;
@@ -632,7 +633,6 @@ bool TransformationTool::RotationStrategy::Transform(int x,
             (*itr)->GetAccumulatedTransformations(&p, &q);
             q.Normalize();
             p = q.GetInverse().RotateVector(d);
-
             Quaternion<float> rot(ratio*PI*0.1,p);
             rot.Normalize();
             Quaternion<float> rot1 = (*itr)->GetRotation();
@@ -651,11 +651,11 @@ bool TransformationTool::RotationStrategy::GrabWidget(int x,
                                                       set<TransformationNode*> selection,
                                                       Viewport& vp) {
     int offset = 2;
-    axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir);
-    if (!axisgrabbed) return false;
     Vector<3,float> p;
     Quaternion<float> q;
     (*selection.begin())->GetAccumulatedTransformations(&p, &q);
+    axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir, true);
+    if (!axisgrabbed) return false;
     axisproj = select.Project(p + q.RotateVector(dir), vp) 
         - select.Project(p, vp); 
     if (axisproj.IsZero()) 
@@ -710,7 +710,6 @@ bool TransformationTool::ScalingStrategy::Transform(int x,
         Vector<2,float> dmouse = Vector<2,float>(x, y) - mouse;
         mouse = Vector<2,float>(x, y);
         Vector<3,float> d = dir.GetNormalize() * (axisproj * dmouse) * ratio;
-        //logger.info << "d: " << d << logger.end;
         for (set<TransformationNode*>::iterator itr = selection.begin();
              itr != selection.end();
              itr++) {
@@ -740,12 +739,11 @@ bool TransformationTool::ScalingStrategy::GrabWidget(int x,
                                                       set<TransformationNode*> selection,
                                                       Viewport& vp) {
     int offset = 2;
-    axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir);
-    if (!axisgrabbed) return false;
-
     Vector<3,float> p;
     Quaternion<float> q;
     (*selection.begin())->GetAccumulatedTransformations(&p, &q);
+    axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir, true);
+    if (!axisgrabbed) return false;
     axisproj = select.Project(p + q.RotateVector(dir), vp) 
         - select.Project(p, vp); 
     if (axisproj.IsZero()) 
@@ -758,11 +756,11 @@ bool TransformationTool::ScalingStrategy::GrabWidget(int x,
 }
 
 bool TransformationTool::ScalingStrategy::GrabSelection(int x, 
-                                                         int y, 
-                                                         ISceneSelection& select, 
-                                                         TransformationNode* node,
-                                                         set<TransformationNode*> selection,
-                                                         Viewport& vp) {
+                                                        int y, 
+                                                        ISceneSelection& select, 
+                                                        TransformationNode* node,
+                                                        set<TransformationNode*> selection,
+                                                        Viewport& vp) {
     // check for selection hit
     set<TransformationNode*>::iterator i = selection.find(node);
     if (i != selection.end()) {

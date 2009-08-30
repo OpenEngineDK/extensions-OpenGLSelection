@@ -10,6 +10,7 @@
 #ifndef _OE_UTILS_TRANSFORMATION_TOOL_
 #define _OE_UTILS_TRANSFORMATION_TOOL_
 
+#include <Meta/OpenGL.h>
 #include <Utils/ITool.h>
 #include <Utils/PointingDevice.h>
 #include <Utils/SelectionSet.h>
@@ -21,6 +22,7 @@
 #include <Resources/ITextureResource.h>
 #include <Scene/SearchTool.h>
 #include <set>
+
 
 namespace OpenEngine {
     namespace Renderers {
@@ -43,26 +45,45 @@ class ISceneSelection;
  * Used to manipulate selected geometry using TransformationNode's.
  * @class TransformationTool TransformationTool.h OpenGLSelection/Utils/TransformationTool.h
  */
-class TransformationTool : public ITool, public Core::IListener<Utils::SelectionSet<Scene::ISceneNode>::ChangedEventArg> {
+class TransformationTool : 
+        public ITool, 
+        public Core::IListener<Utils::SelectionSet<Scene::ISceneNode>::ChangedEventArg> {
 private:
     class AxisWidget {
     private:
         class Axis : public Scene::RenderNode {
         public:
-            float size;
-            Math::Vector<3,float> pos, dir;
-            Math::Quaternion<float> rot;
+            GLUquadricObj* quadr;
+            float rot;
+            Math::Vector<3,float> rotaxis;
+            Math::Vector<3,float> dir;
             Math::Vector<4,float> colr;
-            Axis(Math::Vector<3,float> dir, Math::Vector<4,float> colr);
+            Axis(float rot, 
+                 Math::Vector<3,float> rotaxis, 
+                 Math::Vector<3,float> dir, 
+                 Math::Vector<4,float> colr);
+            virtual ~Axis();
             void Apply(Renderers::IRenderingView* rv);
         };
         Scene::SceneNode* axes;
         Axis *xaxis, *yaxis, *zaxis;
+        class XAxis : public Axis {
+        public: 
+            XAxis();
+        };
+        class YAxis : public Axis {
+        public: 
+            YAxis();
+        };
+        class ZAxis : public Axis {
+        public: 
+            ZAxis();
+        };
     public:        
         AxisWidget();
         virtual ~AxisWidget();
         void Render(Display::IViewingVolume& vv, Scene::ISceneNode* context, bool rotate);
-        bool GrabAxis(int x, int y, int offset, ISceneSelection& select, Scene::ISceneNode* context, Display::Viewport& vp, Math::Vector<3,float>& dir);
+        bool GrabAxis(int x, int y, int offset, ISceneSelection& select, Scene::ISceneNode* context, Display::Viewport& vp, Math::Vector<3,float>& dir, bool rotate);
     };
 
     class ITransformationStrategy {
@@ -86,7 +107,8 @@ private:
                                    Scene::TransformationNode* node, 
                                    set<Scene::TransformationNode*> selection, 
                                    Display::Viewport& vp) = 0;
-        virtual void RenderWidget(Display::IViewingVolume& vv, Scene::ISceneNode* context) = 0;
+        virtual void RenderWidget(Display::IViewingVolume& vv, 
+                                  Scene::ISceneNode* context) = 0;
         virtual bool Reset() = 0;
     };
 
@@ -168,7 +190,8 @@ private:
                            Scene::TransformationNode* node, 
                            set<Scene::TransformationNode*> selection, 
                            Display::Viewport& vp);
-        void RenderWidget(Display::IViewingVolume& vv, Scene::ISceneNode* context);        
+        void RenderWidget(Display::IViewingVolume& vv, 
+                          Scene::ISceneNode* context);        
         bool Reset();
     };
 
@@ -204,7 +227,8 @@ private:
                            Scene::TransformationNode* node, 
                            set<Scene::TransformationNode*> selection, 
                            Display::Viewport& vp);
-        void RenderWidget(Display::IViewingVolume& vv, Scene::ISceneNode* context);        
+        void RenderWidget(Display::IViewingVolume& vv, 
+                          Scene::ISceneNode* context);        
         bool Reset();
     };
 
