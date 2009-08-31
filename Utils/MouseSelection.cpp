@@ -35,7 +35,7 @@ MouseSelection::MouseSelection (IFrame& frame,
     : frame(frame) 
     , mouse(mouse)
     , scenesel(new GLSceneSelection(frame))
-    , pd(new PointingDevice(/**scenesel, root, sset*/))
+    , pd(new PointingDevice())
     , sset (sset)
     , root (root)
     , activeViewport(NULL)
@@ -66,39 +66,51 @@ void MouseSelection::Handle(MouseMovedEventArg arg) {
             }
         }
     }
-    // pd->activeViewport = activeViewport;
     if (!activeViewport) return;
     Vector<4,int> d = activeViewport->GetDimension();
     pd->state.x = arg.x-d[0];
     pd->state.y = (d[3]+d[1])-(frame.GetHeight()-arg.y); 
-    events.push(new PointingDevice::MovedEventArg(arg.dx, arg.dy, *scenesel, root, sset, *pd, *activeViewport));
+    PointingDevice::MovedEventArg e(arg.dx, arg.dy, *scenesel, root, sset, *pd, *activeViewport);
+    for (std::list<ITool*>::iterator i = tools.begin();
+         i != tools.end();
+         i++) {
+        if (!(*i)->Handle(e)) break;
+    }
 }
 
 void MouseSelection::Handle(MouseButtonEventArg arg) {
     if (!activeViewport) return;
     if (arg.type == EVENT_PRESS) {
-        PointingDevice::PressedEventArg* e = new PointingDevice::PressedEventArg(0, *scenesel, root, sset, *pd, *activeViewport);
+        PointingDevice::PressedEventArg e(0, *scenesel, root, sset, *pd, *activeViewport);
         if (arg.button & BUTTON_LEFT) {
             pd->state.btn1down = true;
-            e->btn = 1;
+            e.btn = 1;
         }
         if (arg.button & BUTTON_RIGHT) {
             pd->state.btn2down = true;
-            e->btn = 2;
+            e.btn = 2;
         }
-        events.push(e);
+        for (std::list<ITool*>::iterator i = tools.begin();
+             i != tools.end();
+             i++) {
+            if (!(*i)->Handle(e)) break;
+        }
     }
     if (arg.type == EVENT_RELEASE) {
-        PointingDevice::ReleasedEventArg* e = new PointingDevice::ReleasedEventArg(0, *scenesel, root, sset, *pd, *activeViewport);
+        PointingDevice::ReleasedEventArg e(0, *scenesel, root, sset, *pd, *activeViewport);
         if (arg.button & BUTTON_LEFT) {
             pd->state.btn1down = false;
-            e->btn = 1;
+            e.btn = 1;
         }
         if (arg.button & BUTTON_RIGHT) {
             pd->state.btn2down = false;
-            e->btn = 2;
+            e.btn = 2;
         }
-        events.push(e);
+        for (std::list<ITool*>::iterator i = tools.begin();
+             i != tools.end();
+             i++) {
+            if (!(*i)->Handle(e)) break;
+        }
     }
 }
 
@@ -135,34 +147,8 @@ void MouseSelection::Handle(RenderingEventArg arg) {
             (*i)->RenderOrtho(ortho, arg.renderer);
         }        
     }
-    //for each event try to propagate it down through the list of tools.
-    //@todo: events are allocated and deallocated all the time. too many memory operations!
-    while (!events.empty()) {
-        for (std::list<ITool*>::iterator i = tools.begin();
-             i != tools.end();
-             i++) {
-            bool propagate = true;
-            switch (events.front()->EventType()) {
-            case PD_EVENT_MOVED:
-                propagate = (*i)->Handle(*dynamic_cast<PointingDevice::MovedEventArg*>(events.front()));
-                break;
-            case PD_EVENT_PRESSED: 
-                propagate = (*i)->Handle(*dynamic_cast<PointingDevice::PressedEventArg*>(events.front()));
-                break;
-            case PD_EVENT_RELEASED:
-                propagate = (*i)->Handle(*dynamic_cast<PointingDevice::ReleasedEventArg*>(events.front()));
-                break;
-                //@todo: unknown event exception
-            };
-            if (!propagate) {
-                break;
-            }
-        }
-        delete events.front();
-        events.pop();
-    }
 }
-    
+
 bool MouseSelection::IsViewportActive(Viewport* viewport, int x, int y) {
     Vector<4,int> dim = viewport->GetDimension();
     int fheight = frame.GetHeight();

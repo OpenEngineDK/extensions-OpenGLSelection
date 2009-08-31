@@ -120,19 +120,10 @@ private:
         Math::Vector<3,float> dir;
         Math::Vector<2,float> axisproj;
         float ratio;
-        Math::Vector<2,float> mouse;
         // camera plane movement
         Geometry::Plane plane;
         Scene::TransformationNode* t;
         Math::Vector<3,float> oldp;
-        void UpdateTransformationNodes(float x, float y,
-                                       Display::Viewport& vp,
-                                       ISceneSelection& ssel,
-                                       std::set<Scene::TransformationNode*> selection);
-        void CalcMovePlane(float x, float y, 
-                           Math::Vector<3,float> startPos, 
-                           Display::Viewport& vp,
-                           ISceneSelection& ssel);
         Scene::SearchTool search;
     public:
         TranslationStrategy();
@@ -166,8 +157,6 @@ private:
         bool axisgrabbed;
         Math::Vector<3,float> dir;
         Math::Vector<2,float> axisproj;
-        float ratio;
-        Math::Vector<2,float> mouse;
         Scene::SearchTool search;
     public:
         RotationStrategy();
@@ -202,8 +191,6 @@ private:
         bool axisgrabbed;
         Math::Vector<3,float> dir;
         Math::Vector<2,float> axisproj;
-        float ratio;
-        Math::Vector<2,float> mouse;
         Scene::SearchTool search;
         Scene::TransformationNode* t;
     public:

@@ -481,38 +481,6 @@ TransformationTool::TranslationStrategy::TranslationStrategy():
 TransformationTool::TranslationStrategy::~TranslationStrategy() {
 } 
 
-void TransformationTool::TranslationStrategy::UpdateTransformationNodes(float x, float y, 
-                                                                        Viewport& vp,
-                                                                        ISceneSelection& ssel,
-                                                                        set<TransformationNode*> selection) {
-    //move selected object according to plane and ray intersection
-    Vector<3,float> pos, dp;
-    Tests::Intersects(plane, ssel.Unproject(x, y, vp), &pos);
-    dp = pos-oldp;
-    for (set<TransformationNode*>::iterator itr = selection.begin();
-         itr != selection.end();
-         itr++) {
-        Vector<3,float> p;
-        Quaternion<float> q;
-        (*itr)->GetAccumulatedTransformations(&p, &q);
-        q.Normalize();
-        p = q.GetInverse().RotateVector(dp);
-       (*itr)->Move(p[0], p[1], p[2]);
-    }
-    oldp = pos;
-}
-
-void TransformationTool::TranslationStrategy::CalcMovePlane(float x, float y, 
-                                       Vector<3,float> pos, 
-                                       Viewport& vp,
-                                       ISceneSelection& ssel) {
-    // construct plane and calc initial ray intersection
-    plane = Plane(vp.GetViewingVolume()->
-                  GetDirection().RotateVector(Vector<3,float>(0.0,0.0,1.0)),
-                  pos);
-    Tests::Intersects(plane, ssel.Unproject(x, y, vp), &oldp);
-}
-
 bool TransformationTool::TranslationStrategy::Transform(int x, 
                                                         int y,
                                                         int dx,
@@ -520,10 +488,10 @@ bool TransformationTool::TranslationStrategy::Transform(int x,
                                                         ISceneSelection& select,
                                                         set<TransformationNode*> selection,
                                                         Viewport& vp) {
+    float step = 0.5;
     if (axisgrabbed) {
-        Vector<2,float> dmouse = Vector<2,float>(x, y) - mouse;
-        mouse = Vector<2,float>(x, y);
-        Vector<3,float> d = dir.GetNormalize() * (axisproj * dmouse) * ratio;
+        Vector<2,float> dmouse = Vector<2,float>(dx, dy);
+        Vector<3,float> d = dir * (axisproj * dmouse) * step;
         Vector<3,float> p;
         Quaternion<float> q;
         for (set<TransformationNode*>::iterator itr = selection.begin();
@@ -537,7 +505,21 @@ bool TransformationTool::TranslationStrategy::Transform(int x,
         return true;
     }
     if (t) {
-        UpdateTransformationNodes(x, y, vp, select, selection);
+        //move selected object according to plane and ray intersection
+        Vector<3,float> pos, dp;
+        Tests::Intersects(plane, select.Unproject(x, y, vp), &pos);
+        dp = pos-oldp;
+        for (set<TransformationNode*>::iterator itr = selection.begin();
+             itr != selection.end();
+             itr++) {
+            Vector<3,float> p;
+            Quaternion<float> q;
+            (*itr)->GetAccumulatedTransformations(&p, &q);
+            q.Normalize();
+            p = q.GetInverse().RotateVector(dp);
+            (*itr)->Move(p[0], p[1], p[2]);
+        }
+        oldp = pos;
         return true;
     }
     return false;
@@ -555,14 +537,9 @@ bool TransformationTool::TranslationStrategy::GrabWidget(int x,
     axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir, false);
     if (!axisgrabbed)
         return false;    
-    axisproj = select.Project(p + dir, vp) 
-        - select.Project(p, vp); 
+    axisproj = select.Project(p + dir, vp) - select.Project(p, vp); 
     if (axisproj.IsZero()) 
-        //@todo: what to do with this value???
-        axisproj = Vector<2,float>(0.0,3.0);
-    //p = dir;
-    ratio = (dir.GetLength())/(axisproj.GetLength());
-    mouse = Vector<2,float>(x, y);
+        axisproj = Vector<2,float>(0.0,1.0);
     axisproj.Normalize();
     return true;
 }
@@ -577,7 +554,11 @@ bool TransformationTool::TranslationStrategy::GrabSelection(int x,
     set<TransformationNode*>::iterator i = selection.find(node);
     if (i != selection.end()) {
         t = node;
-        CalcMovePlane(x, y, t->GetPosition(), vp, select);
+        // construct plane and calc initial ray intersection
+        plane = Plane(vp.GetViewingVolume()->
+                      GetDirection().RotateVector(Vector<3,float>(0.0,0.0,1.0)),
+                      t->GetPosition());
+        Tests::Intersects(plane, select.Unproject(x, y, vp), &oldp);
         return true;
     }
     return false;
@@ -616,12 +597,11 @@ bool TransformationTool::RotationStrategy::Transform(int x,
                                                      set<TransformationNode*> selection,
                                                      Viewport& vp) {
     if (axisgrabbed) {
-        Vector<2,float> dmouse = Vector<2,float>(x, y) - mouse;
-        mouse = Vector<2,float>(x, y);
+        Vector<2,float> dmouse = Vector<2,float>(dx, dy); 
         float sign = 1.0f;
         if (axisproj * dmouse < 0) 
             sign = -1.0f;
-        Vector<3,float> d = sign * dir.GetNormalize();
+        Vector<3,float> d = sign * dir;
         Vector<3,float> p;
         Quaternion<float> q;
         (*selection.begin())->GetAccumulatedTransformations(&p, &q);
@@ -633,7 +613,7 @@ bool TransformationTool::RotationStrategy::Transform(int x,
             (*itr)->GetAccumulatedTransformations(&p, &q);
             q.Normalize();
             p = q.GetInverse().RotateVector(d);
-            Quaternion<float> rot(ratio*PI*0.1,p);
+            Quaternion<float> rot(PI*0.1,p);
             rot.Normalize();
             Quaternion<float> rot1 = (*itr)->GetRotation();
             rot1 *= rot;
@@ -656,16 +636,11 @@ bool TransformationTool::RotationStrategy::GrabWidget(int x,
     (*selection.begin())->GetAccumulatedTransformations(&p, &q);
     axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir, true);
     if (!axisgrabbed) return false;
-    axisproj = select.Project(p + q.RotateVector(dir), vp) 
-        - select.Project(p, vp); 
+    axisproj = select.Project(p + q.RotateVector(dir), vp) - select.Project(p, vp); 
     if (axisproj.IsZero()) 
-        //@todo: what todo with this value???
-        axisproj = Vector<2,float>(0.0,-PI*0.01);
-    axisproj = Vector<2,float>(-axisproj[1], axisproj[0]);
-    p = dir;
-    ratio = (p.GetLength())/(axisproj.GetLength());
-    mouse = Vector<2,float>(x, y);
+        axisproj = Vector<2,float>(0.0,-1.0);
     axisproj.Normalize();
+    axisproj = Vector<2,float>(-axisproj[1], axisproj[0]);
     return true;
 }
 
@@ -700,29 +675,25 @@ TransformationTool::ScalingStrategy::~ScalingStrategy() {
 
 
 bool TransformationTool::ScalingStrategy::Transform(int x, 
-                                                     int y,
-                                                     int dx,
-                                                     int dy,
-                                                     ISceneSelection& select,
-                                                     set<TransformationNode*> selection,
-                                                     Viewport& vp) {
+                                                    int y,
+                                                    int dx,
+                                                    int dy,
+                                                    ISceneSelection& select,
+                                                    set<TransformationNode*> selection,
+                                                    Viewport& vp) {
+    float step = 0.06;
     if (axisgrabbed) {
-        Vector<2,float> dmouse = Vector<2,float>(x, y) - mouse;
-        mouse = Vector<2,float>(x, y);
-        Vector<3,float> d = dir.GetNormalize() * (axisproj * dmouse) * ratio;
+        Vector<2,float> dmouse = Vector<2,float>(dx, dy);
+        Vector<3,float> d = dir * (axisproj * dmouse) * step;
         for (set<TransformationNode*>::iterator itr = selection.begin();
              itr != selection.end();
              itr++) {
-            (*itr)->SetScale((*itr)->GetScale()+d);
+            (*itr)->SetScale((*itr)->GetScale() + d);
         }
         return true;
     }
     if (t) {
-            float scl = 1.0;
-            if (dy < 0) 
-                scl = 1.05;
-            if (dy > 0)
-                scl = 0.95;
+        float scl = 1.0 - dy * step;
         for (set<TransformationNode*>::iterator itr = selection.begin();
              itr != selection.end();
              itr++) {
@@ -744,13 +715,9 @@ bool TransformationTool::ScalingStrategy::GrabWidget(int x,
     (*selection.begin())->GetAccumulatedTransformations(&p, &q);
     axisgrabbed = axiswidget.GrabAxis(x, y, offset, select, *selection.begin(), vp, dir, true);
     if (!axisgrabbed) return false;
-    axisproj = select.Project(p + q.RotateVector(dir), vp) 
-        - select.Project(p, vp); 
+    axisproj = select.Project(p + q.RotateVector(dir), vp) - select.Project(p, vp); 
     if (axisproj.IsZero()) 
-        //@todo: what todo with this value???
-        axisproj = Vector<2,float>(0.0,3.0);
-    ratio = (dir.GetLength())/(axisproj.GetLength())*0.1;
-    mouse = Vector<2,float>(x, y);
+        axisproj = Vector<2,float>(0.0,1.0);
     axisproj.Normalize();
     return true;
 }
