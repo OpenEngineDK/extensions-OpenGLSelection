@@ -97,9 +97,10 @@ Ray GLSceneSelection::Unproject(int x, int y, Viewport& viewport) {
     viewport.GetDimension().ToArray(vp);
     volume->GetProjectionMatrix().ToArray(fproj);
     volume->GetViewMatrix().ToArray(fmodel);
+    // conversion from float to double
     for (int i = 0; i < 16; i++) {
         proj[i]      = fproj[i];
-        model[i] = fmodel[i];
+        model[i]     = fmodel[i];
     }
     gluUnProject(x, frame.GetHeight()-y, 0.0f, model, proj, vp, &rx, &ry, &rz);
     Vector<3,float> p1(rx, ry, rz);

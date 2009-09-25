@@ -65,6 +65,8 @@ public:
     void Handle(Renderers::RenderingEventArg arg);
 
     void AddViewport(Display::Viewport* viewport);
+    void AddTool(ITool* tool);
+
     void SetSelectionSet(SelectionSet<Scene::ISceneNode>& sset);
     void SetScene(Scene::ISceneNode* scene);
 };

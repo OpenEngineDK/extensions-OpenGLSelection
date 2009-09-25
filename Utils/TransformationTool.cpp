@@ -102,7 +102,7 @@ bool TransformationTool::Handle(PointingDevice::MovedEventArg arg) {
 bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
     if (selection.empty()) return true;
     switch (arg.btn) {
-    case 1:
+    case 0x1:
         if (traBtn->focus) return false;
         if (rotBtn->focus) return false;
         if (sclBtn->focus) return false;
@@ -124,7 +124,7 @@ bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
 
 bool TransformationTool::Handle(PointingDevice::ReleasedEventArg arg) {
     switch (arg.btn) {
-    case 1: 
+    case 0x1: 
         if (transformation->Reset())
             return false;
         

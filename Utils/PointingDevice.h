@@ -24,7 +24,7 @@ namespace Utils {
 
 /**
  * Pointing Device Abstraction.
- * Used by ITool's to determine appropriate actions.
+ * Used by ITools to determine appropriate actions.
  * @todo find out where to properly place root and select
  * @class PointingDevice PointingDevice.h OpenGLSelection/Utils/PointingDevice.h
  */
@@ -33,14 +33,11 @@ public:
     // Pointing device state
     class State {
     public:
-        State(int x, int y, bool btn1down, bool btn2down, bool btn3down): x(x) 
-                                                                        , y(y) 
-                                                                        , btn1down(btn1down)
-                                                                        , btn2down(btn2down)
-                                                                        , btn3down(btn3down) 
-        {};
+        State(int x, int y, unsigned int btns): x(x) 
+                                              , y(y) 
+                                              , btns(0) {};
         int x, y;
-        bool btn1down, btn2down, btn3down;
+        unsigned int btns;
     };
     // Pointing device events
     class EventArg {
@@ -105,15 +102,7 @@ public:
             EventArg(PD_EVENT_RELEASED, select, root, sset, pd, vp), btn(btn) {}
     };
     State state;
-    // ISceneSelection& select;
-    // Scene::ISceneNode* root;
-    // SelectionSet<Scene::ISceneNode>& sset;
-    PointingDevice(/*ISceneSelection& select,
-                   Scene::ISceneNode* root,
-                   SelectionSet<Scene::ISceneNode>& sset*/): state (State(0, 0, false, false, false))
-                                                             /*, select(select)
-                                                               , root(root)
-                                                               , sset(sset) */ {};
+    PointingDevice(): state (State(0, 0, 0)) {};
     virtual ~PointingDevice() {};
 };
 

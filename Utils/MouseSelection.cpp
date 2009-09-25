@@ -16,9 +16,17 @@
 #include <Utils/GLSceneSelection.h>
 #include <Utils/SelectionTool.h>
 #include <Utils/TransformationTool.h>
+#include <Utils/CameraTool.h>
 
 #include <Logging/Logger.h>
 
+#define dispatchEvent(e)                             \
+  for (std::list<ITool*>::iterator i = tools.begin();\
+           i != tools.end();                         \
+           i++) {                                    \
+      if (!(*i)->Handle(e)) break;                   \
+   }                        
+ 
 namespace OpenEngine {
 namespace Utils {
 
@@ -40,22 +48,29 @@ MouseSelection::MouseSelection (IFrame& frame,
     , root (root)
     , activeViewport(NULL)
 {
-    TransformationTool* tt = new TransformationTool();
-    sset.ChangedEvent().Attach(*tt);
-    tools.push_back(tt);
-    tools.push_back(new SelectionTool());
+    // CameraTool*         ct = new CameraTool();
+    // TransformationTool* tt = new TransformationTool();
+    // SelectionTool*      st = new SelectionTool();
+    
+    // sset.ChangedEvent().Attach(*tt);
+    // tools.push_back(ct);
+    // tools.push_back(tt);
+    // tools.push_back(st);
 }
 
 MouseSelection::~MouseSelection() {
     delete pd;
     delete scenesel;
+    // delete ct;
+    // delete tt;
+    // delete st;
 }
 
 void MouseSelection::Handle(MouseMovedEventArg arg) {
     // find the active viewport
     if (activeViewport == NULL || !IsViewportActive(activeViewport, arg.x, arg.y)) {
-        // dont find new viewport if mouse button is pressed
-        if (arg.buttons & BUTTON_LEFT) return; 
+        // dont find new viewport if buttons are pressed
+        if (pd->state.btns) return; 
         activeViewport = NULL;
         for (list<Viewport*>::iterator itr = viewports.begin();
              itr != viewports.end();
@@ -71,11 +86,7 @@ void MouseSelection::Handle(MouseMovedEventArg arg) {
     pd->state.x = arg.x-d[0];
     pd->state.y = (d[3]+d[1])-(frame.GetHeight()-arg.y); 
     PointingDevice::MovedEventArg e(arg.dx, arg.dy, *scenesel, root, sset, *pd, *activeViewport);
-    for (std::list<ITool*>::iterator i = tools.begin();
-         i != tools.end();
-         i++) {
-        if (!(*i)->Handle(e)) break;
-    }
+    dispatchEvent(e);
 }
 
 void MouseSelection::Handle(MouseButtonEventArg arg) {
@@ -83,34 +94,43 @@ void MouseSelection::Handle(MouseButtonEventArg arg) {
     if (arg.type == EVENT_PRESS) {
         PointingDevice::PressedEventArg e(0, *scenesel, root, sset, *pd, *activeViewport);
         if (arg.button & BUTTON_LEFT) {
-            pd->state.btn1down = true;
-            e.btn = 1;
+            pd->state.btns |= 0x1;
+            e.btn = 0x1;
         }
         if (arg.button & BUTTON_RIGHT) {
-            pd->state.btn2down = true;
-            e.btn = 2;
+            pd->state.btns |= 0x2;
+            e.btn = 0x2;
         }
-        for (std::list<ITool*>::iterator i = tools.begin();
-             i != tools.end();
-             i++) {
-            if (!(*i)->Handle(e)) break;
+        if (arg.button & BUTTON_MIDDLE) {
+            pd->state.btns |= 0x4;
+            e.btn = 0x4;
         }
+        if (arg.button & BUTTON_WHEEL_UP) {
+            pd->state.btns |= 0x8;
+            e.btn = 0x8;
+        }
+        if (arg.button & BUTTON_WHEEL_DOWN) {
+            pd->state.btns |= 0xF;
+            e.btn = 0xF;
+        }
+        
+        dispatchEvent(e);
     }
     if (arg.type == EVENT_RELEASE) {
         PointingDevice::ReleasedEventArg e(0, *scenesel, root, sset, *pd, *activeViewport);
         if (arg.button & BUTTON_LEFT) {
-            pd->state.btn1down = false;
-            e.btn = 1;
+            pd->state.btns ^= 0x1;
+            e.btn = 0x1;
         }
         if (arg.button & BUTTON_RIGHT) {
-            pd->state.btn2down = false;
-            e.btn = 2;
+            pd->state.btns ^= 0x2;
+            e.btn = 0x2;
         }
-        for (std::list<ITool*>::iterator i = tools.begin();
-             i != tools.end();
-             i++) {
-            if (!(*i)->Handle(e)) break;
+        if (arg.button & BUTTON_MIDDLE) {
+            pd->state.btns ^= 0x4;
+            e.btn = 0x4;
         }
+        dispatchEvent(e);
     }
 }
 
@@ -160,6 +180,10 @@ bool MouseSelection::IsViewportActive(Viewport* viewport, int x, int y) {
 
 void MouseSelection::AddViewport(Viewport* viewport) {
     viewports.push_back(viewport);
+}
+
+void MouseSelection::AddTool(ITool* tool) {
+    tools.push_back(tool);
 }
 
 void MouseSelection::SetSelectionSet(SelectionSet<ISceneNode>& sset) {

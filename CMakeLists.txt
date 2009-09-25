@@ -12,6 +12,8 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Utils/SelectionTool.cpp
   Utils/TransformationTool.h
   Utils/TransformationTool.cpp
+  Utils/CameraTool.h
+  Utils/CameraTool.cpp
 )
 
 TARGET_LINK_LIBRARIES( ${EXTENSION_NAME}
