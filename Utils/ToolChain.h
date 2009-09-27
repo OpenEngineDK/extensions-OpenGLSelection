@@ -1,4 +1,4 @@
-// ITool - Selection Tool
+// Selection Tool Interface
 // -------------------------------------------------------------------
 // Copyright (C) 2007 OpenEngine.dk (See AUTHORS) 
 // 
@@ -7,13 +7,14 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_SELECTION_TOOL_
-#define _OE_UTILS_SELECTION_TOOL_
+#ifndef _OE_UTILS_TOOL_CHAIN_
+#define _OE_UTILS_TOOL_CHAIN_
 
-#include <Utils/ITool.h>
 #include <Utils/PointingDevice.h>
-#include <Scene/ISceneNodeVisitor.h>
-#include <Utils/SelectionSet.h>
+#include <Utils/ITool.h>
+
+// STL
+#include <list>
 
 namespace OpenEngine {
     namespace Renderers {
@@ -25,21 +26,24 @@ namespace OpenEngine {
 namespace Utils {
 
 /**
- * Selection Tool
+ * Compound tool containing several single tools. 
  * 
- * @class SelectionTool SelectionTool.h OpenGLSelection/Utils/SelectionTool.h
+ * @class ToolChain ToolChain.h OpenGLSelection/Utils/ToolChain.h
  */
-class SelectionTool : public ITool {
+class ToolChain: public ITool {
 private:
-    int x, y, down_x, down_y;
-    SelectionSet<Scene::ISceneNode>& ss;
+    std::list<ITool*> tools;
 public:
-    SelectionTool(SelectionSet<Scene::ISceneNode>& ss);
+    ToolChain();
+    virtual ~ToolChain();
+
     bool Handle(PointingDevice::MovedEventArg arg);
     bool Handle(PointingDevice::PressedEventArg arg);
     bool Handle(PointingDevice::ReleasedEventArg arg);
     void Render(Display::IViewingVolume& vv, Renderers::IRenderer& r);
     void RenderOrtho(Display::IViewingVolume& vv, Renderers::IRenderer& r);
+
+    void PushBackTool(ITool* tool);
 };
 
 } // NS Utils

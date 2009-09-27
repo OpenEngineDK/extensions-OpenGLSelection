@@ -12,15 +12,16 @@
 
 #include <Core/IListener.h>
 #include <Devices/IMouse.h>
+#include <Devices/IKeyboard.h>
 #include <Renderers/IRenderer.h>
 
 // selection tool utils
 #include <Utils/PointingDevice.h>
-#include <Utils/SelectionSet.h>
 #include <Utils/ISceneSelection.h>
 #include <Utils/ITool.h>
 // STL
 #include <list>
+#include <map>
 #include <queue>
 
 namespace OpenEngine {
@@ -40,34 +41,35 @@ namespace Utils {
  */
 class MouseSelection : public Core::IListener<Devices::MouseMovedEventArg> 
                      , public Core::IListener<Devices::MouseButtonEventArg>
+                     , public Core::IListener<Devices::KeyboardEventArg>
                      , public Core::IListener<Renderers::RenderingEventArg> {
 private:
     Display::IFrame& frame;
     Devices::IMouse& mouse;
     ISceneSelection* scenesel;
     PointingDevice* pd;
-    SelectionSet<Scene::ISceneNode>& sset;
     Scene::ISceneNode* root;
     Display::Viewport* activeViewport;
     std::list<Display::Viewport*> viewports;
     std::queue<PointingDevice::EventArg*> events;
     std::list<ITool*> tools;
+    std::map<Display::Viewport*, ITool*> vtmap;
     bool IsViewportActive(Display::Viewport* viewport, int x, int y);
 public:
     MouseSelection(Display::IFrame& frame, 
                    Devices::IMouse& mouse, 
-                   SelectionSet<Scene::ISceneNode>& sset, 
                    Scene::ISceneNode* root);
     virtual ~MouseSelection();
 
     void Handle(Devices::MouseMovedEventArg arg);
     void Handle(Devices::MouseButtonEventArg arg);
+    void Handle(Devices::KeyboardEventArg arg);
     void Handle(Renderers::RenderingEventArg arg);
 
     void AddViewport(Display::Viewport* viewport);
-    void AddTool(ITool* tool);
+    // void AddTool(ITool* tool);
 
-    void SetSelectionSet(SelectionSet<Scene::ISceneNode>& sset);
+    void BindTool(Display::Viewport* vp, ITool* t);
     void SetScene(Scene::ISceneNode* scene);
 };
 

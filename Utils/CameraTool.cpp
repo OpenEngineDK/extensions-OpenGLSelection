@@ -24,6 +24,7 @@ using namespace Math;
 CameraTool::CameraTool(): m_x(-1), m_y(-1)  {}
 
 bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
+    if (m_x == -1) return true;
     if (!(arg.state.btns & 0x7))
         return true;
     IViewingVolume& vv = *arg.vp.GetViewingVolume();
@@ -63,6 +64,8 @@ bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
 }
 
 bool CameraTool::Handle(PointingDevice::PressedEventArg arg) {
+    if (!(arg.state.shifts & 0x1)) 
+        return true;
     if (arg.btn & 0x7) {
         IViewingVolume& vv = *arg.vp.GetViewingVolume();
         init_q = vv.GetDirection();
@@ -135,8 +138,6 @@ void CameraTool::SetRotation(Quaternion<float> q, IViewingVolume& vv) {
     timer_q.Reset();
     timer_q.Start();
 }
-
-
 
 } // NS Utils
 } // NS OpenEngine

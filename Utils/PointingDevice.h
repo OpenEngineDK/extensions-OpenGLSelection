@@ -10,10 +10,6 @@
 #ifndef _OE_UTILS_POINTING_DEVICE_
 #define _OE_UTILS_POINTING_DEVICE_
 
-#define PD_EVENT_MOVED    0x0
-#define PD_EVENT_PRESSED  0x1
-#define PD_EVENT_RELEASED 0x2
-
 #include <Scene/ISceneNode.h>
 #include <Utils/ISceneSelection.h>
 #include <Utils/SelectionSet.h>
@@ -33,39 +29,36 @@ public:
     // Pointing device state
     class State {
     public:
-        State(int x, int y, unsigned int btns): x(x) 
-                                              , y(y) 
-                                              , btns(0) {};
         int x, y;
         unsigned int btns;
+        unsigned int shifts;
+        State(int x, int y, unsigned int btns, unsigned int shifts): 
+            x(x) 
+            , y(y) 
+            , btns(btns)
+            , shifts(shifts) 
+        {};
     };
     // Pointing device events
     class EventArg {
-    private:
-        int type;
     public:
         State state;
         ISceneSelection& select;
         Scene::ISceneNode* root;
-        SelectionSet<Scene::ISceneNode>& sset;
         PointingDevice& pd;             // primary pointing device 
         std::list<PointingDevice*> pds; // reserved for multiple pointing devices
         Display::Viewport& vp;
-        EventArg(int type, 
+        EventArg(
                  ISceneSelection& select, 
                  Scene::ISceneNode* root, 
-                 SelectionSet<Scene::ISceneNode>& sset, 
                  PointingDevice& pd, 
                  Display::Viewport& vp): 
-            type(type), 
             state(pd.state), 
             select(select), 
             root(root), 
-            sset(sset), 
             pd(pd), 
             vp(vp) {}
         virtual ~EventArg() {};
-        int EventType() {return type;}
     };
     class MovedEventArg: public EventArg {
     public: 
@@ -74,10 +67,9 @@ public:
                       int dy, 
                       ISceneSelection& select, 
                       Scene::ISceneNode* root, 
-                      SelectionSet<Scene::ISceneNode>& sset,
                       PointingDevice& pd, 
                       Display::Viewport& vp):
-            EventArg(PD_EVENT_MOVED, select, root, sset, pd, vp), dx(dx), dy(dy) {}
+            EventArg(select, root, pd, vp), dx(dx), dy(dy) {}
     };
     class PressedEventArg: public EventArg  {
     public: 
@@ -85,10 +77,9 @@ public:
         PressedEventArg(int btn, 
                         ISceneSelection& select, 
                         Scene::ISceneNode* root, 
-                        SelectionSet<Scene::ISceneNode>& sset,
                         PointingDevice& pd, 
                         Display::Viewport& vp): 
-            EventArg(PD_EVENT_PRESSED, select, root, sset, pd, vp), btn(btn) {}
+            EventArg(select, root, pd, vp), btn(btn) {}
     };
     class ReleasedEventArg: public EventArg  {
     public: 
@@ -96,13 +87,12 @@ public:
         ReleasedEventArg(int btn, 
                          ISceneSelection& select, 
                          Scene::ISceneNode* root, 
-                         SelectionSet<Scene::ISceneNode>& sset,
                          PointingDevice& pd, 
                          Display::Viewport& vp): 
-            EventArg(PD_EVENT_RELEASED, select, root, sset, pd, vp), btn(btn) {}
+            EventArg(select, root, pd, vp), btn(btn) {}
     };
     State state;
-    PointingDevice(): state (State(0, 0, 0)) {};
+    PointingDevice(): state (State(0, 0, 0x0, 0x0)) {};
     virtual ~PointingDevice() {};
 };
 

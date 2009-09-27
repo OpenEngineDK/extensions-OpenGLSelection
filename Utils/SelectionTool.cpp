@@ -31,7 +31,7 @@ using namespace std;
 using namespace Math;
 using namespace Geometry;
     
-SelectionTool::SelectionTool(): down_x(-1), down_y(-1) {}
+SelectionTool::SelectionTool(SelectionSet<ISceneNode>& ss): down_x(-1), down_y(-1), ss(ss) {}
 
 bool SelectionTool::Handle(PointingDevice::MovedEventArg arg) {
     if (down_x == -1) return true;
@@ -45,7 +45,7 @@ bool SelectionTool::Handle(PointingDevice::PressedEventArg arg) {
     case 1:
         x = down_x = arg.state.x;
         y = down_y = arg.state.y;
-        arg.sset.Clear();
+        ss.Clear();
         break;
     };
     return false;
@@ -64,7 +64,7 @@ bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
                                                arg.root, 
                                                arg.vp);
             if (!selection.empty())
-                arg.sset.Select(selection.front());
+                ss.Select(selection.front());
         }
         else {
             selection = arg.select.SelectRegion(down_x,
@@ -73,7 +73,7 @@ bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
                                                 arg.state.y,
                                                 arg.root, 
                                                 arg.vp);
-            arg.sset.Select(selection);
+            ss.Select(selection);
         }
         down_x = -1;
         down_y = -1;
