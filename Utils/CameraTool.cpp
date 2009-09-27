@@ -13,7 +13,6 @@
 #include <Display/IViewingVolume.h>
 #include <Display/Viewport.h>
 #include <Renderers/IRenderer.h>
-#include <Math/Quaternion.h>
 
 namespace OpenEngine {
 namespace Utils {
@@ -22,45 +21,122 @@ using namespace Display;
 using namespace Renderers;
 using namespace Math;
 
-CameraTool::CameraTool()  {}
+CameraTool::CameraTool(): m_x(-1), m_y(-1)  {}
 
 bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
+    if (!(arg.state.btns & 0x7))
+        return true;
+    IViewingVolume& vv = *arg.vp.GetViewingVolume();
+    float step = 10.0f;
+    int dx = arg.state.x - m_x;
+    int dy = arg.state.y - m_y;
     if (arg.state.btns & 0x1) {
-        IViewingVolume& vv = *arg.vp.GetViewingVolume();
-        Quaternion<float> q = vv.GetDirection();
         Vector<3,float> cam_x(1.0f,0.0f,0.0f);
         Vector<3,float> cam_y(0.0f,-1.0f,0.0f);
-        float step = 5.0f;
-        vv.SetPosition(vv.GetPosition() + q.RotateVector(cam_x)*arg.dx*step + q.RotateVector(cam_y)*arg.dy*step);
+        //vv.SetPosition(init_p + init_q.RotateVector(cam_x) * dx * step + init_q.RotateVector(cam_y)*dy*step);
+        SetPosition(init_p + init_q.RotateVector(cam_x) * dx * step + 
+                    init_q.RotateVector(cam_y) * dy * step, vv); 
+        return false;
+    }
+    if (arg.state.btns & 0x2) {
+        Vector<3,float> cam_x(1.0f,0.0f,0.0f);
+        Vector<3,float> cam_z(0.0f,0.0f,-1.0f);
+        // vv.SetPosition(init_p + 
+        //                init_q.RotateVector(cam_x) * dx * step + 
+        //                init_q.RotateVector(cam_z) * dy * step);
+        SetPosition(init_p + 
+                    init_q.RotateVector(cam_x) * dx * step + 
+                    init_q.RotateVector(cam_z) * dy * step, vv);
+        return false;
+    }
+    if (arg.state.btns & 0x4) { 
+        // Quaternion<float> cam_x(arg.dy*0.01, q.RotateVector(Vector<3,float>(1.0f,0.0f,0.0f)));
+        // Quaternion<float> cam_y(arg.dx*0.01, Vector<3,float>(0.0f,-1.0f,0.0f));
+        Vector<3,float> axis = init_q.RotateVector(Vector<3,float>(1.0f,0.0f,0.0f))*dy 
+            + init_q.RotateVector(Vector<3,float>(0.0f,-1.0f,0.0f))*dx;
+        Quaternion<float> cam_rot(0.01, axis);
+        //vv.SetDirection( cam_rot.GetNormalize() * init_q );
+        SetRotation(cam_rot.GetNormalize() * init_q, vv);
         return false;
     }
     return true;
 }
 
 bool CameraTool::Handle(PointingDevice::PressedEventArg arg) {
-    if ((arg.btn == 0x8) || (arg.btn == 0xF)) {
+    if (arg.btn & 0x7) {
+        IViewingVolume& vv = *arg.vp.GetViewingVolume();
+        init_q = vv.GetDirection();
+        init_p = vv.GetPosition();
+        m_x = arg.state.x;
+        m_y = arg.state.y;
+        return false;
+    }
+    if ((arg.btn == 0x8) || (arg.btn == 16)) {
         IViewingVolume& vv = *arg.vp.GetViewingVolume();
         Quaternion<float> q = vv.GetDirection();
-        Vector<3,float> unit(0.0f,0.0f,1.0f);
-        float step = 10.0f;
+        Vector<3,float> forward(0.0f,0.0f,1.0f);
+        float step = 40.0f;
         if (arg.btn == 0x8) 
             step *= -1;
-        vv.SetPosition(vv.GetPosition() + q.RotateVector(unit)*step);
+        //vv.SetPosition(vv.GetPosition() + q.RotateVector(forward)*step);
+        SetPosition(vv.GetPosition() + q.RotateVector(forward)*step, vv);
         return false;
     }
     return true;
 }
 
 bool CameraTool::Handle(PointingDevice::ReleasedEventArg arg) {
+    if (m_x != -1) {
+        m_x = m_y = -1;
+        return false;
+    }
     return true;
 }
     
 void CameraTool::Render(IViewingVolume& vv, IRenderer& r) {
-
+    if (timer_p.IsRunning()) {
+        float t_p = (timer_p.GetElapsedTime().AsInt32() / (1000.0f) ) / max_time_p; 
+        //logger.info << "t_p: " << t_p << logger.end;
+        if (t_p > 1.0f) {
+            t_p = 1.0f;
+            timer_p.Stop();
+        }
+        vv.SetPosition(start_p + delta_p*t_p);
+    }
+    if (timer_q.IsRunning()) {
+        float t_q = timer_q.GetElapsedTime().AsInt32() / (1000.0f) / max_time_q;
+        //logger.info << "t_q: " << t_q << logger.end;
+        if (t_q > 1.0f) {
+            t_q = 1.0;
+            timer_q.Stop();
+        }
+        vv.SetDirection(Quaternion<float>(start_q, end_q, t_q));
+    }
 }
 
 void CameraTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r) {
 }
+
+void CameraTool::SetPosition(Vector<3,float> p, IViewingVolume& vv) {
+    start_p = vv.GetPosition();
+    end_p = p;
+    delta_p = end_p - start_p;
+    float speed = 1.2; // miliseconds per unit distance
+    max_time_p = speed * delta_p.GetLength();
+    timer_p.Reset();
+    timer_p.Start();
+}
+
+void CameraTool::SetRotation(Quaternion<float> q, IViewingVolume& vv) {
+    start_q = vv.GetDirection();
+    end_q = q;
+    float speed = 200; // miliseconds per radian rotation.
+    max_time_q = speed * fabs(q.GetReal());
+    timer_q.Reset();
+    timer_q.Start();
+}
+
+
 
 } // NS Utils
 } // NS OpenEngine

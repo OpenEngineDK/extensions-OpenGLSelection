@@ -106,12 +106,12 @@ void MouseSelection::Handle(MouseButtonEventArg arg) {
             e.btn = 0x4;
         }
         if (arg.button & BUTTON_WHEEL_UP) {
-            pd->state.btns |= 0x8;
+            //pd->state.btns |= 0x8;
             e.btn = 0x8;
         }
         if (arg.button & BUTTON_WHEEL_DOWN) {
-            pd->state.btns |= 0xF;
-            e.btn = 0xF;
+            //pd->state.btns |= 0xF;
+            e.btn = 0x10;
         }
         
         dispatchEvent(e);

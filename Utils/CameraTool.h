@@ -12,6 +12,8 @@
 
 #include <Utils/ITool.h>
 #include <Utils/PointingDevice.h>
+#include <Utils/Timer.h>
+#include <Math/Quaternion.h>
 
 namespace OpenEngine {
     namespace Renderers {
@@ -21,7 +23,6 @@ namespace OpenEngine {
         class IViewingVolume;
     }
 namespace Utils {
-
 /**
  * Camera Tool
  * 
@@ -29,6 +30,14 @@ namespace Utils {
  */
 class CameraTool : public ITool {
 private:
+    int m_x, m_y;  //save mouse coordinates on button down.
+    //interpolation stuff
+    Timer timer_p, timer_q;
+    float max_time_p, max_time_q;
+    Math::Vector<3,float> init_p, start_p, delta_p, end_p;
+    Math::Quaternion<float> init_q, start_q, end_q;
+    void SetPosition(Math::Vector<3,float> p, Display::IViewingVolume& vv);
+    void SetRotation(Math::Quaternion<float> q, Display::IViewingVolume& vv);
 public:
     CameraTool();
     bool Handle(PointingDevice::MovedEventArg arg);
