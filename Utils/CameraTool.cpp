@@ -27,7 +27,7 @@ bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
     if (!(arg.state.btns & 0x7))
         return true;
     IViewingVolume& vv = *arg.vp.GetViewingVolume();
-    float step = 10.0f;
+    float step = 5.0f;
     int dx = arg.state.x - m_x;
     int dy = arg.state.y - m_y;
     if (arg.state.btns & 0x1) {
@@ -50,11 +50,11 @@ bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
         return false;
     }
     if (arg.state.btns & 0x4) { 
-        // Quaternion<float> cam_x(arg.dy*0.01, q.RotateVector(Vector<3,float>(1.0f,0.0f,0.0f)));
-        // Quaternion<float> cam_y(arg.dx*0.01, Vector<3,float>(0.0f,-1.0f,0.0f));
-        Vector<3,float> axis = init_q.RotateVector(Vector<3,float>(1.0f,0.0f,0.0f))*dy 
-            + init_q.RotateVector(Vector<3,float>(0.0f,-1.0f,0.0f))*dx;
-        Quaternion<float> cam_rot(0.01, axis);
+        Quaternion<float> cam_x(dy*0.01, init_q.RotateVector(Vector<3,float>(1.0f,0.0f,0.0f)));
+        Quaternion<float> cam_y(dx*0.01, /*init_q.RotateVector(*/Vector<3,float>(0.0f,-1.0f,0.0f)/*)*/);
+        // Vector<3,float> axis = init_q.RotateVector(Vector<3,float>(1.0f,0.0f,0.0f))*dy 
+        //     + init_q.RotateVector(Vector<3,float>(0.0f,-1.0f,0.0f))*dx;
+        Quaternion<float> cam_rot/*(0.1, axis);*/ = cam_y * cam_x;
         //vv.SetDirection( cam_rot.GetNormalize() * init_q );
         SetRotation(cam_rot.GetNormalize() * init_q, vv);
         return false;
@@ -121,7 +121,7 @@ void CameraTool::SetPosition(Vector<3,float> p, IViewingVolume& vv) {
     start_p = vv.GetPosition();
     end_p = p;
     delta_p = end_p - start_p;
-    float speed = 1.2; // miliseconds per unit distance
+    float speed = 1.3; // miliseconds per unit distance
     max_time_p = speed * delta_p.GetLength();
     timer_p.Reset();
     timer_p.Start();
