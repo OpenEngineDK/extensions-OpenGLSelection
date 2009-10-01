@@ -71,7 +71,7 @@ private:
 public:
     GLSceneSelection(Display::IFrame& frame);
     Geometry::Ray                 Unproject(int x, int y, Display::Viewport& viewport);    
-    Math::Vector<2,float>         Project(Math::Vector<3,float> point, Display::Viewport& viewport);    
+    Math::Vector<2,float>         Project(Math::Vector<3,float> point, Display::Viewport& viewport);
     std::list<Scene::ISceneNode*> SelectPoint(int x, int y, Scene::ISceneNode* root, 
                                               Display::Viewport& viewport, Scene::ISceneNode* context = NULL);
     std::list<Scene::ISceneNode*> SelectRegion(int x1, int y1, int x2, int y2, Scene::ISceneNode* root, 

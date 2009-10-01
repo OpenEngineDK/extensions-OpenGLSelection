@@ -104,7 +104,7 @@ Ray GLSceneSelection::Unproject(int x, int y, Viewport& viewport) {
     }
     gluUnProject(x, frame.GetHeight()-y, 0.0f, model, proj, vp, &rx, &ry, &rz);
     Vector<3,float> p1(rx, ry, rz);
-    return Ray(p1, volume->GetPosition()-p1);
+    return Ray(volume->GetPosition(), p1-volume->GetPosition());
 }
 
 GLSceneSelection::SelectionRenderer::SelectionRenderer() {
