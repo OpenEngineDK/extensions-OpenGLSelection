@@ -17,14 +17,26 @@
 #include <Display/OrthogonalViewingVolume.h>
 #include <Display/IFrame.h>
 #include <Display/IViewingVolume.h>
+#include <Display/Viewport.h>
 #include <Geometry/Tests.h>
 #include <Geometry/Ray.h>
-#include <Resources/ITextureResource.h>
 #include <Resources/DirectoryManager.h>
 #include <Resources/ResourceManager.h>
 #include <list>
 
+#include <Utils/OSDRenderer.h>
+#include <Utils/OSDCollection.h>
+#include <Utils/OSDButton.h>
+#include <Utils/OSDSlider.h>
+
+#include <Renderers/OpenGL/Renderer.h>
+#include <Renderers/TextureLoader.h>
 #include <Logging/Logger.h>
+
+//font test
+#include <Resources/SDLFont.h>
+#include <Resources/IFontResource.h>
+#include <Resources/IFontTextureResource.h>
 
 namespace OpenEngine {
 namespace Utils {
@@ -36,65 +48,60 @@ using namespace Geometry;
 using namespace Resources;
 using namespace std;
 
-TransformationTool::TransformationTool(): 
-      transformation(&translation)
-    , buttons(new SceneNode())
-    , traBtn(new Button(25, 25,16))
-    , rotBtn(new Button(25, 25+38,16))
-    , sclBtn(new Button(25, 25+38+38,16)) {
+TransformationTool::TransformationTool(TextureLoader& texloader): 
+      transformation(&translate)
+{
+    ResourceManager<IFontResource>::AddPlugin(new SDLFontPlugin());
 
-    buttons->AddNode(traBtn);
-    buttons->AddNode(rotBtn);
-    buttons->AddNode(sclBtn);
+    osd_r = new OSDRenderer(texloader);
+    f = osd_r->GetFont();
 
-    ITextureResourcePtr tra = 
-        ResourceManager<ITextureResource>::Create("Buttons/translate.png");
-    ITextureResourcePtr rot = 
-        ResourceManager<ITextureResource>::Create("Buttons/rotate.png");
-    ITextureResourcePtr scl = 
-        ResourceManager<ITextureResource>::Create("Buttons/scale.png");
-    // Vector<4,float> fc(.125f,  .1367f, .3281f, 1.0f);
-    Vector<4,float> bc(1.0, 1.0, 1.0, 0.85f);
-    Vector<4,float> fc(202.0f/256.0f,  255.0f/256.0f, 97.0f/256.0f, 1.0f);
+    osd_col = new OSDCollection(SIMPLE);
+    osd_col->SetPosition(Vector<2,int>(10, 10));
 
-    traBtn->selected = true;
-    traBtn->bg = tra;
-    traBtn->bgc = bc;
-    traBtn->fgc = fc;
-    rotBtn->bg = rot;
-    rotBtn->bgc = bc;
-    rotBtn->fgc = fc;
-    sclBtn->bg = scl;
-    sclBtn->bgc = bc;
-    sclBtn->fgc = fc;
+    osd_rad = new OSDCollection(RADIO);
+
+    traBtn = new OSDButton(*osd_r);
+    osd_rad->AddWidget(traBtn);
+    traBtn->SetCaption("Translate");
+    traBtn->SetActive(true);
+    rotBtn = new OSDButton(*osd_r);
+    rotBtn->SetCaption("Rotate");
+    osd_rad->AddWidget(rotBtn);
+
+    sclBtn = new OSDButton(*osd_r);
+    sclBtn->SetCaption("Scale");
+    osd_rad->AddWidget(sclBtn);
+    
+    osd_col->AddWidget(osd_rad);
+
+    slider = new OSDSlider();
+    slider->SetDimensions(Vector<2,int>(140,10));
+    slider->SetColor(Vector<4,float> (.8,.2,.2,1.0));
+    osd_col->AddWidget(slider);
+
+    OSDSlider* slider2 = new OSDSlider();
+    slider2->SetDimensions(Vector<2,int>(140,10));
+    slider2->SetColor(Vector<4,float> (.8,.2,.2,1.0));
+    osd_col->AddWidget(slider2);
 }
 
 TransformationTool::~TransformationTool() {
-    delete buttons;
+    delete traBtn;
+    delete rotBtn;
+    delete sclBtn;
 }
 
 bool TransformationTool::Handle(PointingDevice::MovedEventArg arg) {
     if (selection.empty()) return true;
     if (transformation->Transform(arg.state.x, arg.state.y, arg.dx, arg.dy, arg.select, selection, arg.vp))
         return false;
-    //@todo: don't use projection but just check bounding rectangle.
-    traBtn->focus = false;
-    rotBtn->focus = false;
-    sclBtn->focus = false;
-    list<ISceneNode*> btn = arg.select.SelectPointOrtho(arg.state.x,
-                                                        arg.state.y,
-                                                        buttons, 
-                                                        arg.vp);
-    if (!btn.empty()) {
-        if (btn.front() == traBtn) {
-            traBtn->focus = true;
-        }
-        else if (btn.front() == rotBtn) {
-            rotBtn->focus = true;
-        }
-        else if (btn.front() == sclBtn) {
-            sclBtn->focus = true;
-        }
+    if (osd_col->FocusAt(arg.state.x, arg.state.y) == slider) {
+        if (slider->GetValue() < 0.3) 
+            f->SetFontStyle(FONT_STYLE_NORMAL);
+        else if (slider->GetValue() < 0.6)
+            f->SetFontStyle(FONT_STYLE_BOLD);
+        else f->SetFontStyle(FONT_STYLE_ITALIC);
     }
     return false;
 }
@@ -103,12 +110,23 @@ bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
     if (selection.empty()) return true;
     switch (arg.btn) {
     case 0x1:
-        if (traBtn->focus) return false;
-        if (rotBtn->focus) return false;
-        if (sclBtn->focus) return false;
+        OSDIWidget* w;
+        if ((w = osd_col->ActivateFocus())) {
+            if (w == traBtn) {
+                transformation = &translate;
+            }
+            if (w == rotBtn) {
+                transformation = &rotate; 
+            }
+            if (w == sclBtn) {
+                transformation = &scale;
+            }
+            return false;
+        }
+        // see if we grab the transformation widget.
         if (transformation->GrabWidget(arg.state.x, arg.state.y, arg.select, selection, arg.vp))
             return false;
-        // check for selection hit
+        // check for selection hit in the scene
         list<ISceneNode*> ns = arg.select.SelectPoint(arg.state.x,
                                                   arg.state.y,
                                                   arg.root, 
@@ -127,29 +145,8 @@ bool TransformationTool::Handle(PointingDevice::ReleasedEventArg arg) {
     case 0x1: 
         if (transformation->Reset())
             return false;
-        
-        //todo: @ ugly hacked up code
-        if (traBtn->focus) {
-            traBtn->selected = true;
-            rotBtn->selected = false;
-            sclBtn->selected = false;
-            transformation = &translation;
-            return false;
-        }
-        if (rotBtn->focus) {
-            rotBtn->selected = true;
-            traBtn->selected = false;
-            sclBtn->selected = false;
-            transformation = &rotation;
-            return false;
-        }
-        if (sclBtn->focus) {
-            sclBtn->selected = true;
-            traBtn->selected = false;
-            rotBtn->selected = false;
-            transformation = &scaling;
-            return false;
-        }
+        osd_col->Reset();//ActivateFocus(); 
+        //@todo use OSDIWidget events instead of switches.
     };
     return true;
 }
@@ -244,68 +241,19 @@ void TransformationTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r
     glPushAttrib(GL_DEPTH_BUFFER_BIT);
     glPushAttrib(GL_ENABLE_BIT);
     //@todo: find a better tex-loading strategy
-    if (traBtn->bg != NULL && traBtn->bg->GetID() == 0)
-        r.LoadTexture(traBtn->bg);
-    if (rotBtn->bg != NULL && rotBtn->bg->GetID() == 0)
-        r.LoadTexture(rotBtn->bg);
-    if (sclBtn->bg != NULL && sclBtn->bg->GetID() == 0)
-        r.LoadTexture(sclBtn->bg);
-    traBtn->Apply(NULL);
-    rotBtn->Apply(NULL);
-    sclBtn->Apply(NULL);
+    // if (traBtn->GetTexture()->GetID() == 0)
+    //     r.LoadTexture(traBtn->GetTexture());
+    // if (rotBtn->GetTexture()->GetID() == 0)
+    //     r.LoadTexture(rotBtn->GetTexture());
+    // if (sclBtn->GetTexture()->GetID() == 0)
+    //     r.LoadTexture(sclBtn->GetTexture());
+    // render the OSDCollection. The OSDRenderer does not setup the
+    // ModelViewMatrix but simply uses the current..
+    // osd_r->SetRenderer(r);
+    osd_r->Render(*osd_col);
     glPopAttrib();
     glPopAttrib();
     glPopAttrib();
-}
-
-TransformationTool::Button::Button(float posx, float posy, float size)
-    : posx(posx)
-    , posy(posy)
-    , size(size)
-    , selected(false)
-    , focus(false) {}
-
-void TransformationTool::Button::Apply(Renderers::IRenderingView* rv) {
-    float x, y;
-    float offs = 2;
-    float col[4];
-    if (selected) {
-        fgc.ToArray(col);
-    }
-    else {
-        bgc.ToArray(col);
-    }
-    if (focus) {
-        x = posx-offs;
-        y = posy-offs;
-    }
-    else {
-        x = posx;
-        y = posy;
-    }
-    if (bg == NULL) {
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_TEXTURE_2D);
-        CHECK_FOR_GL_ERROR();
-    }
-    else {
-        glBindTexture(GL_TEXTURE_2D, bg->GetID());
-        glEnable(GL_TEXTURE_2D);
-    }
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4fv(col);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(x-size, y-size, -1.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(x-size, y+size, -1.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(x+size, y+size, -1.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(x+size, y-size, -1.0);
-    glEnd();    
 }
 
 TransformationTool::AxisWidget::Axis::Axis(float rot, 

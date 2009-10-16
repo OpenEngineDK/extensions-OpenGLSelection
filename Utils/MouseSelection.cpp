@@ -162,9 +162,9 @@ bool MouseSelection::IsViewportActive(Viewport* viewport, int x, int y) {
     return false;
 }
 
-void MouseSelection::AddViewport(Viewport* viewport) {
-    viewports.push_back(viewport);
-}
+// void MouseSelection::AddViewport(Viewport* viewport) {
+//     viewports.push_back(viewport);
+// }
 
 // void MouseSelection::AddTool(ITool* tool) {
 //     tools.push_back(tool);

@@ -50,9 +50,9 @@ private:
     PointingDevice* pd;
     Scene::ISceneNode* root;
     Display::Viewport* activeViewport;
-    std::list<Display::Viewport*> viewports;
-    std::queue<PointingDevice::EventArg*> events;
-    std::list<ITool*> tools;
+    // std::list<Display::Viewport*> viewports;
+    // std::queue<PointingDevice::EventArg*> events;
+    // std::list<ITool*> tools;
     std::map<Display::Viewport*, ITool*> vtmap;
     bool IsViewportActive(Display::Viewport* viewport, int x, int y);
 public:
@@ -66,7 +66,7 @@ public:
     void Handle(Devices::KeyboardEventArg arg);
     void Handle(Renderers::RenderingEventArg arg);
 
-    void AddViewport(Display::Viewport* viewport);
+    // void AddViewport(Display::Viewport* viewport);
     // void AddTool(ITool* tool);
 
     void BindTool(Display::Viewport* vp, ITool* t);

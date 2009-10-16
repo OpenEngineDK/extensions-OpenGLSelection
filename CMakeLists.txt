@@ -16,8 +16,20 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Utils/CameraTool.cpp
   Utils/ToolChain.h
   Utils/ToolChain.cpp
+
+  Utils/OSDIRenderer.h
+  Utils/OSDIWidget.h
+  Utils/OSDButton.h
+  Utils/OSDButton.cpp
+  Utils/OSDSlider.h
+  Utils/OSDSlider.cpp
+  Utils/OSDRenderer.h
+  Utils/OSDRenderer.cpp
+  Utils/OSDCollection.h
+  Utils/OSDCollection.cpp
 )
 
 TARGET_LINK_LIBRARIES( ${EXTENSION_NAME}
   OpenEngine_Display
+  Extensions_SDLFont
 )

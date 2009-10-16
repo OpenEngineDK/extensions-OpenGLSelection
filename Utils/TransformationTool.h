@@ -23,11 +23,14 @@
 #include <Scene/SearchTool.h>
 #include <set>
 
+#include <Resources/IFontTextureResource.h>
+#include <Resources/IFontResource.h>
 
 namespace OpenEngine {
     namespace Renderers {
         class IRenderer;
         class IRenderingView;
+        class TextureLoader;
     }
     namespace Scene {
         class TransformationNode;
@@ -39,6 +42,10 @@ namespace OpenEngine {
     }
 namespace Utils {
 class ISceneSelection;
+class OSDRenderer;
+class OSDCollection;
+class OSDButton;
+class OSDSlider;
 
 /**
  * Transformation Tool
@@ -225,29 +232,24 @@ private:
         void VisitTransformationNode(Scene::TransformationNode* node);
     };
 
-    class Button: public Scene::RenderNode {
-    private:
-    public:
-        Resources::ITextureResourcePtr fg, bg;
-        Math::Vector<4,float> fgc, bgc;
-        float posx, posy, size;
-        bool selected, focus;
-        Button(float posx, float posy, float size);
-        void Apply(Renderers::IRenderingView* rv);
-    };
     SelectionRenderer sr;    
     std::set<Scene::TransformationNode*> selection;
-    TranslationStrategy translation;
-    RotationStrategy rotation;
-    ScalingStrategy scaling;
+    TranslationStrategy translate;
+    RotationStrategy rotate;
+    ScalingStrategy scale;
     ITransformationStrategy* transformation;
-    // buttons
-    Scene::SceneNode* buttons;
-    Button *traBtn, *rotBtn, *sclBtn;
     Scene::SearchTool search;
+    OSDRenderer* osd_r;
+    OSDCollection *osd_col, *osd_rad;
+    OSDButton *traBtn, *rotBtn, *sclBtn;
+    OSDSlider *slider;
     inline void ApplyTransformationNode(Scene::TransformationNode* node);
 public:
-    TransformationTool();
+    Resources::IFontTextureResourcePtr ft;
+    Resources::IFontTextureResourcePtr ft2;
+    Resources::IFontTextureResourcePtr ft3;
+    Resources::IFontResourcePtr f;
+    TransformationTool(Renderers::TextureLoader& texloader);
     ~TransformationTool();
     bool Handle(PointingDevice::MovedEventArg arg);
     bool Handle(PointingDevice::PressedEventArg arg);
