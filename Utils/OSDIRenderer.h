@@ -15,12 +15,13 @@ namespace Utils {
 
 class OSDButton;
 class OSDSlider;
+class OSDCircularSlider;
 class OSDCollection;
 
 /**
  * On Screen Display Renderer Class.
  *
- * @class OSDRenderer OSDRenderer.h OpenGLSelection/Utils/OSDRenderer.h
+ * @class OSDIRenderer OSDIRenderer.h OpenGLSelection/Utils/OSDIRenderer.h
  */
 class OSDIRenderer {
 private:
@@ -28,6 +29,7 @@ public:
     virtual ~OSDIRenderer() {};
     virtual void Render(OSDButton& w) = 0;
     virtual void Render(OSDSlider& w) = 0;
+    virtual void Render(OSDCircularSlider& w) = 0;
     virtual void Render(OSDCollection& w) = 0;
 };
 

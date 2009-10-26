@@ -13,7 +13,6 @@
 #include <Utils/OSDIWidget.h>
 
 #include <Math/Vector.h>
-#include <Resources/ITextureResource.h>
 
 namespace OpenEngine {
 namespace Utils {
@@ -23,18 +22,17 @@ namespace Utils {
  * A slider changes value in the interval [0.0,1.0] when manipulated
  * by the input device.
  *
- * @class OSDButton OSDButton.h OpenGLSelection/Utils/OSDButton.h
+ * @class OSDSlider OSDSlider.h OpenGLSelection/Utils/OSDSlider.h
  */
 class OSDSlider: public OSDIWidget {
 private:
-    Math::Vector<4,float> colr;
     int x, y, width, height;
     bool active, focus;
     float value;
 public:
     OSDSlider();
     virtual ~OSDSlider();
-    
+
     Math::Vector<2,int> GetPosition();
     Math::Vector<2,int> GetDimensions();
     void SetPosition(Math::Vector<2,int> pos);
@@ -49,10 +47,6 @@ public:
     OSDIWidget* ActivateAt(int x, int y);
     OSDIWidget* ActivateFocus();
     void Reset();
-
-    Math::Vector<4,float> GetColor();
-    void SetColor(Math::Vector<4,float> colr);
-
     float GetValue();
     void SetValue(float value);
 };

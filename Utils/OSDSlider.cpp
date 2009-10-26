@@ -14,7 +14,6 @@ namespace OpenEngine {
 namespace Utils {
 
 using namespace Math;
-using namespace Resources;
 
 OSDSlider::OSDSlider(): 
     x(0)
@@ -46,14 +45,6 @@ void OSDSlider::SetDimensions(Vector<2,int> dim) {
     height = dim[1];
 }
 
-void OSDSlider::SetColor(Math::Vector<4,float> colr) {
-    this->colr = colr;
-}
-
-Vector<4,float> OSDSlider::GetColor() {
-    return colr;
-}
-
 void OSDSlider::Accept(OSDIRenderer& r) {
     r.Render(*this);
 }
@@ -81,10 +72,10 @@ void OSDSlider::SetFocus(bool focus) {
 }
 
 OSDIWidget* OSDSlider::FocusAt(int x, int y) {
+    if (active && width != 0) {
+        SetValue(float(x - this->x) / float(width)); 
+    }
     if (WidgetAt(x,y)) {
-        if (active && width != 0) {
-            SetValue(float(x - this->x) / float(width)); 
-        }
         SetFocus(true);
         return this;
     }
@@ -118,6 +109,8 @@ float OSDSlider::GetValue() {
 }
 
 void OSDSlider::SetValue(float value) {
+    value = fmin(1.0, value); 
+    value = fmax(0.0, value); 
     this->value = value;
 }
 

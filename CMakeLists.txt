@@ -23,6 +23,8 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Utils/OSDButton.cpp
   Utils/OSDSlider.h
   Utils/OSDSlider.cpp
+  Utils/OSDCircularSlider.h
+  Utils/OSDCircularSlider.cpp
   Utils/OSDRenderer.h
   Utils/OSDRenderer.cpp
   Utils/OSDCollection.h

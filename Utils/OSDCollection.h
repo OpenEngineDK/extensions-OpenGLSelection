@@ -21,7 +21,7 @@ enum ResetMode {SIMPLE, RADIO};
  * On Screen Display - Collection of Widgets.  
  *
  * A button has positional info, can receive input events and can be
- * rendered.  
+ * rendered. 
  *
  * @class OSDCollection OSDCollection.h OpenGLSelection/Utils/OSDCollection.h
  */
@@ -29,8 +29,9 @@ class OSDCollection: public OSDIWidget {
 private:
     ResetMode mode;
     std::list<OSDIWidget*> widgets;
-    int x, y, width, height;
+    int x, y, dx, dy, width, height;
     OSDIWidget *focusWidget;
+    bool active, focus;
     void UpdateWidgets();
 public:
     OSDCollection(ResetMode mode);

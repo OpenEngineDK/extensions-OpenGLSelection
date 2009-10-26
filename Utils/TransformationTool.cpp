@@ -28,6 +28,7 @@
 #include <Utils/OSDCollection.h>
 #include <Utils/OSDButton.h>
 #include <Utils/OSDSlider.h>
+#include <Utils/OSDCircularSlider.h>
 
 #include <Renderers/OpenGL/Renderer.h>
 #include <Renderers/TextureLoader.h>
@@ -57,7 +58,7 @@ TransformationTool::TransformationTool(TextureLoader& texloader):
     f = osd_r->GetFont();
 
     osd_col = new OSDCollection(SIMPLE);
-    osd_col->SetPosition(Vector<2,int>(10, 10));
+    osd_col->SetPosition(Vector<2,int>(20, 20));
 
     osd_rad = new OSDCollection(RADIO);
 
@@ -77,12 +78,10 @@ TransformationTool::TransformationTool(TextureLoader& texloader):
 
     slider = new OSDSlider();
     slider->SetDimensions(Vector<2,int>(140,10));
-    slider->SetColor(Vector<4,float> (.8,.2,.2,1.0));
     osd_col->AddWidget(slider);
 
-    OSDSlider* slider2 = new OSDSlider();
-    slider2->SetDimensions(Vector<2,int>(140,10));
-    slider2->SetColor(Vector<4,float> (.8,.2,.2,1.0));
+    OSDCircularSlider* slider2 = new OSDCircularSlider(*osd_r);
+    slider2->SetDimensions(Vector<2,int>(40,40));
     osd_col->AddWidget(slider2);
 }
 

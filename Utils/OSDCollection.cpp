@@ -10,6 +10,8 @@
 #include <Utils/OSDCollection.h>
 #include <Utils/OSDIRenderer.h>
 
+#include <Logging/Logger.h>
+
 namespace OpenEngine {
 namespace Utils {
 
@@ -24,6 +26,8 @@ OSDCollection::OSDCollection(ResetMode mode)
     , height(0)
       //, activeWidget(NULL)
     , focusWidget(NULL)
+    , active(false)
+    , focus(false)
 {}
 
 OSDCollection::~OSDCollection() {}
@@ -61,27 +65,31 @@ OSDIWidget* OSDCollection::WidgetAt(int x, int y) {
                 return w;
             }
         }
+        return this;
     }
     return NULL;
 }
 
 bool OSDCollection::GetActive() {
-    for (list<OSDIWidget*>::iterator itr = widgets.begin(); 
-         itr != widgets.end();
-         itr++) {
-        if ((*itr)->GetActive()) return true;
-    }
-    return false;
+    // for (list<OSDIWidget*>::iterator itr = widgets.begin(); 
+    //      itr != widgets.end();
+    //      itr++) {
+    //     if ((*itr)->GetActive()) return true;
+    // }
+    return active;
 }
 
 void OSDCollection::SetActive(bool active) {
+    this->active = active;
 }
 
 bool OSDCollection::GetFocus() {
-    return (focusWidget != NULL);
+    return focus;
+    // return (focusWidget != NULL);
 }
 
 void OSDCollection::SetFocus(bool focus) {
+    this->focus = focus;
 }
 
 void OSDCollection::AddWidget(OSDIWidget* w) {
@@ -95,6 +103,10 @@ void OSDCollection::RemoveWidget(OSDIWidget* w) {
 }
 
 OSDIWidget* OSDCollection::FocusAt(int x, int y) {
+    if (active) {
+        SetPosition(Vector<2,int>(x-dx, y-dy));
+        return this;
+    }
     focusWidget = NULL;
     for (list<OSDIWidget*>::iterator itr = widgets.begin(); 
          itr != widgets.end();
@@ -102,6 +114,17 @@ OSDIWidget* OSDCollection::FocusAt(int x, int y) {
         OSDIWidget* w = (*itr)->FocusAt(x,y);
         if (w) focusWidget = w;
     }
+    if (focusWidget) {
+        SetFocus(false);
+        return focusWidget;
+    }
+    if (x >= this->x && x < this->x + width && y >= this->y && y < this->y + height) {
+        dx = x - this->x;
+        dy = y - this->y;
+        SetFocus(true);
+        return this;
+    }
+    SetFocus(false);
     // if (focusWidget) focusWidget->SetFocus(false);
     // focusWidget = WidgetAt(x,y);
     // if (focusWidget) focusWidget->FocusAt(x, y);
@@ -136,6 +159,10 @@ OSDIWidget* OSDCollection::ActivateFocus() {
         OSDIWidget* w = (*itr)->ActivateFocus();        
         if (w) return w;
     }
+    if (focus) {
+        SetActive(true);
+        return this;
+    }
     return NULL;
 }
 
@@ -152,6 +179,7 @@ void OSDCollection::Reset() {
            (*itr)->Reset();
         }
     }
+   SetActive(false);
 }
 
 list<OSDIWidget*> OSDCollection::GetWidgets() {
@@ -166,7 +194,7 @@ void OSDCollection::UpdateWidgets() {
          itr != widgets.end();
          itr++) {
         OSDIWidget* w = *itr;
-        int y_space = 10;
+        int y_space = 2;
         int w_y = y_space + acc_y;
         w->SetPosition(Vector<2,int>(x,w_y));
         i++;

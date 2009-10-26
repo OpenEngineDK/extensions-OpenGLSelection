@@ -25,10 +25,11 @@ namespace Utils {
 
 class OSDButton;
 class OSDSlider;
+class OSDCircularSlider;
 class OSDCollection;
 
 /**
- * On Screen Display Renderer Class.
+ * On Screen Display OpenGL Renderer Class.
  *
  * @class OSDRenderer OSDRenderer.h OpenGLSelection/Utils/OSDRenderer.h
  */
@@ -37,6 +38,7 @@ private:
     Renderers::TextureLoader& texloader;
     Resources::ITextureResourcePtr sliderTex;
     Resources::IFontResourcePtr font;
+    Resources::IFontResourcePtr smallfont;
     Math::Vector<4,float> activeColor, inactiveColor;
 public:
     OSDRenderer(Renderers::TextureLoader& texloader);
@@ -44,10 +46,12 @@ public:
 
     void Render(OSDButton& w);
     void Render(OSDSlider& w);
+    void Render(OSDCircularSlider& w);
     void Render(OSDCollection& w);
     
     Renderers::TextureLoader& GetTextureLoader();
     Resources::IFontResourcePtr GetFont();
+    Resources::IFontResourcePtr GetSmallFont();
     // void SetRenderer(Renderers::IRenderer& r);
     // Renderers::IRenderer& GetRenderer();
 };

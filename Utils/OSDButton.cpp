@@ -61,26 +61,6 @@ void OSDButton::SetDimensions(Vector<2,int> dim) {
     height = dim[1];
 }
 
-// void OSDButton::SetColor(Math::Vector<4,float> colr) {
-//     this->colr = colr;
-// }
-
-// void OSDButton::SetActiveColor(Math::Vector<4,float> colr) {
-//     this->activeColr = colr;
-// }
-
-// void OSDButton::SetTexture(Resources::ITextureResourcePtr texr) {
-//     this->texr = texr;
-// }
-
-// Vector<4,float> OSDButton::GetColor() {
-//     return colr;
-// }
-
-// Vector<4,float> OSDButton::GetActiveColor() {
-//     return activeColr;
-// }
-
 ITextureResourcePtr OSDButton::GetTexture() {
     return texr;
 }
