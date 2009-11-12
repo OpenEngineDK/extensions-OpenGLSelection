@@ -24,7 +24,7 @@ namespace Widgets {
 using Core::Event;
 
 using std::string;
-class Renderer;
+class WidgetRenderer;
 
 class ValueChangedEvent{
 public:

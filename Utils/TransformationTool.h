@@ -40,12 +40,20 @@ namespace OpenEngine {
     namespace Display {
         class IViewingVolume;
     }
+    namespace Widgets {
+        class WidgetRenderer;
+        class Collection;
+        class Button;
+        class Slider;
+
+    }
 namespace Utils {
 class ISceneSelection;
-class OSDRenderer;
-class OSDCollection;
-class OSDButton;
-class OSDSlider;
+
+using Widgets::WidgetRenderer;
+using Widgets::Collection;
+using Widgets::Button;
+using Widgets::Slider;
 
 /**
  * Transformation Tool
@@ -239,10 +247,10 @@ private:
     ScalingStrategy scale;
     ITransformationStrategy* transformation;
     Scene::SearchTool search;
-    OSDRenderer* osd_r;
-    OSDCollection *osd_col, *osd_rad;
-    OSDButton *traBtn, *rotBtn, *sclBtn;
-    OSDSlider *slider;
+    WidgetRenderer* osd_r;
+    Collection *osd_col, *osd_rad;
+    Button *traBtn, *rotBtn, *sclBtn;
+    Slider *slider;
     inline void ApplyTransformationNode(Scene::TransformationNode* node);
 public:
     Resources::IFontTextureResourcePtr ft;

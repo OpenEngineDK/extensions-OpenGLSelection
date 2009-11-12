@@ -24,11 +24,11 @@
 #include <Resources/ResourceManager.h>
 #include <list>
 
-#include <Utils/OSDRenderer.h>
-#include <Utils/OSDCollection.h>
-#include <Utils/OSDButton.h>
-#include <Utils/OSDSlider.h>
-#include <Utils/OSDCircularSlider.h>
+#include <Widgets/WidgetRenderer.h>
+#include <Widgets/Collection.h>
+#include <Widgets/Button.h>
+#include <Widgets/Slider.h>
+#include <Widgets/CircularSlider.h>
 
 #include <Renderers/OpenGL/Renderer.h>
 #include <Renderers/TextureLoader.h>
@@ -47,6 +47,7 @@ using namespace Display;
 using namespace Scene;
 using namespace Geometry;
 using namespace Resources;
+using namespace Widgets;
 using namespace std;
 
 TransformationTool::TransformationTool(TextureLoader& texloader): 
@@ -54,33 +55,33 @@ TransformationTool::TransformationTool(TextureLoader& texloader):
 {
     ResourceManager<IFontResource>::AddPlugin(new SDLFontPlugin());
 
-    osd_r = new OSDRenderer(texloader);
+    osd_r = new WidgetRenderer(texloader);
     f = osd_r->GetFont();
 
-    osd_col = new OSDCollection(SIMPLE);
+    osd_col = new Collection(SIMPLE);
     osd_col->SetPosition(Vector<2,int>(20, 20));
 
-    osd_rad = new OSDCollection(RADIO);
+    osd_rad = new Collection(RADIO);
 
-    traBtn = new OSDButton(*osd_r);
+    traBtn = new Button(*osd_r);
     osd_rad->AddWidget(traBtn);
     traBtn->SetCaption("Translate");
     traBtn->SetActive(true);
-    rotBtn = new OSDButton(*osd_r);
+    rotBtn = new Button(*osd_r);
     rotBtn->SetCaption("Rotate");
     osd_rad->AddWidget(rotBtn);
 
-    sclBtn = new OSDButton(*osd_r);
+    sclBtn = new Button(*osd_r);
     sclBtn->SetCaption("Scale");
     osd_rad->AddWidget(sclBtn);
     
     osd_col->AddWidget(osd_rad);
 
-    slider = new OSDSlider();
+    slider = new Slider();
     slider->SetDimensions(Vector<2,int>(140,10));
     osd_col->AddWidget(slider);
 
-    OSDCircularSlider* slider2 = new OSDCircularSlider(*osd_r);
+    CircularSlider* slider2 = new CircularSlider(*osd_r);
     slider2->SetDimensions(Vector<2,int>(40,40));
     osd_col->AddWidget(slider2);
 }
@@ -109,7 +110,7 @@ bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
     if (selection.empty()) return true;
     switch (arg.btn) {
     case 0x1:
-        OSDIWidget* w;
+        IWidget* w;
         if ((w = osd_col->ActivateFocus())) {
             if (w == traBtn) {
                 transformation = &translate;
