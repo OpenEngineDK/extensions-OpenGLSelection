@@ -7,10 +7,10 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_OSD_RENDERER_
-#define _OE_UTILS_OSD_RENDERER_
+#ifndef _OE_UTILS_WIDGETS_WIDGET_RENDERER_
+#define _OE_UTILS_WIDGETS_WIDGET_RENDERER_
 
-#include <Utils/OSDIRenderer.h>
+#include <Widgets/IWidgetRenderer.h>
 #include <Resources/ITextureResource.h>
 #include <Resources/IFontResource.h>
 #include <Math/Vector.h>
@@ -18,22 +18,22 @@
 
 namespace OpenEngine {
     namespace Renderers {
-        // class IRenderer;
+        // class IWidgetRenderer;
         class TextureLoader;
     }
-namespace Utils {
+namespace Widgets {
 
-class OSDButton;
-class OSDSlider;
-class OSDCircularSlider;
-class OSDCollection;
+class Button;
+class Slider;
+class CircularSlider;
+class Collection;
 
 /**
  * On Screen Display OpenGL Renderer Class.
  *
- * @class OSDRenderer OSDRenderer.h OpenGLSelection/Utils/OSDRenderer.h
+ * @class Renderer Renderer.h OpenGLSelection/Utils/Renderer.h
  */
-class OSDRenderer: public OSDIRenderer {
+class WidgetRenderer: public IWidgetRenderer {
 private:
     Renderers::TextureLoader& texloader;
     Resources::ITextureResourcePtr sliderTex;
@@ -41,13 +41,13 @@ private:
     Resources::IFontResourcePtr smallfont;
     Math::Vector<4,float> activeColor, inactiveColor;
 public:
-    OSDRenderer(Renderers::TextureLoader& texloader);
-    virtual ~OSDRenderer();
+    WidgetRenderer(Renderers::TextureLoader& texloader);
+    virtual ~WidgetRenderer();
 
-    void Render(OSDButton& w);
-    void Render(OSDSlider& w);
-    void Render(OSDCircularSlider& w);
-    void Render(OSDCollection& w);
+    void Render(Button& w);
+    void Render(Slider& w);
+    void Render(CircularSlider& w);
+    void Render(Collection& w);
     
     Renderers::TextureLoader& GetTextureLoader();
     Resources::IFontResourcePtr GetFont();
@@ -58,4 +58,4 @@ public:
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_OSD_RENDERER_
+#endif //_OE_UTILS_WIDGETS_RENDERER_

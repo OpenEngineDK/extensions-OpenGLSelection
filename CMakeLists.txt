@@ -17,18 +17,18 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Utils/ToolChain.h
   Utils/ToolChain.cpp
 
-  Utils/OSDIRenderer.h
-  Utils/OSDIWidget.h
-  Utils/OSDButton.h
-  Utils/OSDButton.cpp
-  Utils/OSDSlider.h
-  Utils/OSDSlider.cpp
-  Utils/OSDCircularSlider.h
-  Utils/OSDCircularSlider.cpp
-  Utils/OSDRenderer.h
-  Utils/OSDRenderer.cpp
-  Utils/OSDCollection.h
-  Utils/OSDCollection.cpp
+  Widgets/IWidgetRenderer.h
+  Widgets/IWidget.h
+  Widgets/Button.h
+  Widgets/Button.cpp
+  Widgets/Slider.h
+  Widgets/Slider.cpp
+  Widgets/CircularSlider.h
+  Widgets/CircularSlider.cpp
+  Widgets/WidgetRenderer.h
+  Widgets/WidgetRenderer.cpp
+  Widgets/Collection.h
+  Widgets/Collection.cpp
 )
 
 TARGET_LINK_LIBRARIES( ${EXTENSION_NAME}

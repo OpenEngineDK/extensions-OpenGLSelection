@@ -7,50 +7,56 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_OSD_SLIDER_
-#define _OE_UTILS_OSD_SLIDER_
+#ifndef _OE_UTILS_WIDGETS_SLIDER_
+#define _OE_UTILS_WIDGETS_SLIDER_
 
-#include <Utils/OSDIWidget.h>
+#include <Widgets/IWidget.h>
 
 #include <Math/Vector.h>
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 /**
  * On Screen Display Slider Class.  
  *
  * A slider changes value in the interval [0.0,1.0] when manipulated
  * by the input device.
  *
- * @class OSDSlider OSDSlider.h OpenGLSelection/Utils/OSDSlider.h
+ * @class Slider Slider.h OpenGLSelection/Utils/Slider.h
  */
-class OSDSlider: public OSDIWidget {
+// template <class ValueType>
+typedef float ValueType;
+class Slider: public IWidget {
 private:
     int x, y, width, height;
     bool active, focus;
-    float value;
+    ValueType value;
 public:
-    OSDSlider();
-    virtual ~OSDSlider();
+    Slider();
+    virtual ~Slider();
+
+    void SetSmallFont(IFontResourcePtr font);
+    void SetLargeFont(IFontResourcePtr font);
+    void SetupFonts(WidgetRenderer& r);
 
     Math::Vector<2,int> GetPosition();
     Math::Vector<2,int> GetDimensions();
     void SetPosition(Math::Vector<2,int> pos);
     void SetDimensions(Math::Vector<2,int> dim);
-    void Accept(OSDIRenderer& r);
+    void Accept(IWidgetRenderer& r);
     bool GetActive();
     void SetActive(bool active);
     bool GetFocus();
     void SetFocus(bool focus);
-    OSDIWidget* WidgetAt(int x, int y);
-    OSDIWidget* FocusAt(int x, int y);
-    OSDIWidget* ActivateAt(int x, int y);
-    OSDIWidget* ActivateFocus();
+    IWidget* WidgetAt(int x, int y);
+    IWidget* FocusAt(int x, int y);
+    IWidget* ActivateAt(int x, int y);
+    IWidget* ActivateFocus();
     void Reset();
-    float GetValue();
-    void SetValue(float value);
+    ValueType GetValue();
+    void SetValue(ValueType value);
 };
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_OSD_SLIDER_
+#endif //_OE_UTILS_WIDGETS_SLIDER_

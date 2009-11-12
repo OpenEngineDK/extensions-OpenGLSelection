@@ -7,20 +7,29 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#include <Utils/OSDButton.h>
-#include <Utils/OSDIRenderer.h>
-#include <Utils/OSDRenderer.h>
+#include <Widgets/Button.h>
+#include <Widgets/IWidgetRenderer.h>
+#include <Widgets/WidgetRenderer.h>
 
 #include <Renderers/TextureLoader.h>
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 
 using namespace Math;
 using namespace Resources;
 using namespace Renderers;
 
-OSDButton::OSDButton(OSDRenderer& r)
+Button::Button()
+    : x(0)
+    , y(0)
+    , width(0)
+    , height(0)
+    , active(false)
+    , focus(false) 
+{
+}
+Button::Button(WidgetRenderer& r)
     : texr(r.GetFont()->CreateFontTexture())
     , x(0)
     , y(0)
@@ -32,7 +41,7 @@ OSDButton::OSDButton(OSDRenderer& r)
     r.GetTextureLoader().Load(texr, TextureLoader::RELOAD_IMMEDIATE);
 }
 
-// OSDButton::OSDButton(ITextureResourcePtr texr): 
+// Button::Button(ITextureResourcePtr texr): 
 //     texr(texr)
 //     , x(0)
 //     , y(0)
@@ -41,68 +50,72 @@ OSDButton::OSDButton(OSDRenderer& r)
 //     , active(false)
 //     , focus(false) {}
 
-OSDButton::~OSDButton() {}
+Button::~Button() {}
     
-Vector<2,int> OSDButton::GetPosition() {
+Vector<2,int> Button::GetPosition() {
     return Vector<2,int>(x, y);
 }
 
-Vector<2,int> OSDButton::GetDimensions() {
+Vector<2,int> Button::GetDimensions() {
     return Vector<2,int>(width, height);
 }
 
-void OSDButton::SetPosition(Vector<2,int> pos) {
+void Button::SetPosition(Vector<2,int> pos) {
     x = pos[0];
     y = pos[1];
 }
 
-void OSDButton::SetDimensions(Vector<2,int> dim) {
+void Button::SetDimensions(Vector<2,int> dim) {
     width = dim[0];
     height = dim[1];
 }
 
-ITextureResourcePtr OSDButton::GetTexture() {
+ITextureResourcePtr Button::GetTexture() {
     return texr;
 }
 
-void OSDButton::SetCaption(string text) {
-    texr->SetText(text);
-    width = texr->GetWidth();
-    height = texr->GetHeight();
+void Button::SetCaption(string text) {
+    caption = text;
+    if (texr) { 
+        texr->SetText(text);
+        width = texr->GetWidth();
+        height = texr->GetHeight();
+    }
 }
 
-string OSDButton::GetCaption() {
-    return texr->GetText();
+string Button::GetCaption() {
+    return caption;
 }
 
 
-void OSDButton::Accept(OSDIRenderer& r) {
+void Button::Accept(IWidgetRenderer& r) {
     r.Render(*this);
 }
 
-OSDIWidget* OSDButton::WidgetAt(int x, int y) {
+IWidget* Button::WidgetAt(int x, int y) {
     if (x >= this->x && x < this->x + width && y >= this->y && y < this->y + height)
         return this;
     return NULL;
 }
 
-bool OSDButton::GetActive() {
+bool Button::GetActive() {
     return active;
 }
 
-void OSDButton::SetActive(bool active) {
+void Button::SetActive(bool active) {
     this->active = active;
+    e.Notify(StateChangedEvent(active));
 }
 
-bool OSDButton::GetFocus() {
+bool Button::GetFocus() {
     return focus;
 }
 
-void OSDButton::SetFocus(bool focus) {
+void Button::SetFocus(bool focus) {
     this->focus = focus;
 }
 
-OSDIWidget* OSDButton::FocusAt(int x, int y) {
+IWidget* Button::FocusAt(int x, int y) {
     if (WidgetAt(x,y)) {
         SetFocus(true);
         return this;
@@ -111,7 +124,7 @@ OSDIWidget* OSDButton::FocusAt(int x, int y) {
     return NULL;
 }
 
-OSDIWidget* OSDButton::ActivateAt(int x, int y) {
+IWidget* Button::ActivateAt(int x, int y) {
     if (WidgetAt(x,y)) {
         SetActive(true);
         return this;
@@ -120,7 +133,7 @@ OSDIWidget* OSDButton::ActivateAt(int x, int y) {
     return NULL;
 }
 
-OSDIWidget* OSDButton::ActivateFocus() {
+IWidget* Button::ActivateFocus() {
     if (focus) {
         SetActive(true);
         return this;
@@ -128,9 +141,27 @@ OSDIWidget* OSDButton::ActivateFocus() {
     return NULL;
 }
 
-void OSDButton::Reset() {
+void Button::Reset() {
     SetActive(false);
 }
+
+void Button::SetSmallFont(IFontResourcePtr font) {
+
+}
+
+void Button::SetLargeFont(IFontResourcePtr font) {
+
+}
+
+void Button::SetupFonts(WidgetRenderer& r) {
+    texr = r.GetFont()->CreateFontTexture();
+    texr->SetText(caption);
+    width = texr->GetWidth();
+    height = texr->GetHeight();
+    r.GetTextureLoader().Load(texr, TextureLoader::RELOAD_IMMEDIATE);
+
+}
+
 
 } // NS Utils
 } // NS OpenEngine

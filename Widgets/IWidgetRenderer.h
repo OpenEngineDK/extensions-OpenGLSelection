@@ -7,32 +7,32 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_OSD_INTERFACE_RENDERER_
-#define _OE_UTILS_OSD_INTERFACE_RENDERER_
+#ifndef _OE_UTILS_WIDGETS_INTERFACE_WIDGET_RENDERER_
+#define _OE_UTILS_WIDGETS_INTERFACE_WIDGET_RENDERER_
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 
-class OSDButton;
-class OSDSlider;
-class OSDCircularSlider;
-class OSDCollection;
+class Button;
+class Slider;
+class CircularSlider;
+class Collection;
 
 /**
  * On Screen Display Renderer Class.
  *
- * @class OSDIRenderer OSDIRenderer.h OpenGLSelection/Utils/OSDIRenderer.h
+ * @class IWidgetRenderer IWidgetRenderer.h OpenGLSelection/Utils/IWidgetRenderer.h
  */
-class OSDIRenderer {
+class IWidgetRenderer {
 private:
 public:
-    virtual ~OSDIRenderer() {};
-    virtual void Render(OSDButton& w) = 0;
-    virtual void Render(OSDSlider& w) = 0;
-    virtual void Render(OSDCircularSlider& w) = 0;
-    virtual void Render(OSDCollection& w) = 0;
+    virtual ~IWidgetRenderer() {};
+    virtual void Render(Button& w) = 0;
+    virtual void Render(Slider& w) = 0;
+    virtual void Render(CircularSlider& w) = 0;
+    virtual void Render(Collection& w) = 0;
 };
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_OSD_RENDERER_
+#endif //_OE_UTILS_WIDGETS_RENDERER_

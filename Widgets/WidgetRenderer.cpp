@@ -7,32 +7,32 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#include <Utils/OSDRenderer.h>
-#include <Utils/OSDButton.h>
-#include <Utils/OSDSlider.h>
-#include <Utils/OSDCircularSlider.h>
-#include <Utils/OSDCollection.h>
+#include <Widgets/WidgetRenderer.h>
+#include <Widgets/Button.h>
+#include <Widgets/Slider.h>
+#include <Widgets/CircularSlider.h>
+#include <Widgets/Collection.h>
 
 #include <Resources/ResourceManager.h>
 #include <Renderers/TextureLoader.h>
-#include <Renderers/IRenderer.h>
+#include <Widgets/IWidgetRenderer.h>
 #include <Meta/OpenGL.h>
 #include <Math/Vector.h>
 
 #include <list>
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 
 using namespace Math;
 using namespace std;
 using namespace Resources;
 using namespace Renderers;
 
-OSDRenderer::OSDRenderer(TextureLoader& texloader)
+WidgetRenderer::WidgetRenderer(TextureLoader& texloader)
     : texloader(texloader)
-    , activeColor(Vector<4,float>(.8,.2,.2,1.0))//Vector<4,float>(0.9, .2, 0.2, 1.0f))
-    , inactiveColor(Vector<4,float>(0.0, 0.0, 0.0, 1.0))
+    , activeColor(Vector<4,float>(.2,.2,.5, 1.0))//Vector<4,float>(0.9, .2, 0.2, 1.0f))
+    , inactiveColor(Vector<4,float>(0.2, 0.2, 0.5, 0.5))
 {
     sliderTex = ResourceManager<ITextureResource>::Create("slider_bg.png");
     texloader.Load(sliderTex);
@@ -45,29 +45,21 @@ OSDRenderer::OSDRenderer(TextureLoader& texloader)
     smallfont->Load();
 }
 
-OSDRenderer::~OSDRenderer() {}
+WidgetRenderer::~WidgetRenderer() {}
 
-TextureLoader& OSDRenderer::GetTextureLoader() {
+TextureLoader& WidgetRenderer::GetTextureLoader() {
     return texloader;
 }
 
-// void OSDRenderer::SetRenderer(IRenderer& r) {
-//     this->r = r;
-// }
-
-// IRenderer& OSDRenderer::GetRenderer() {
-//     return r;
-// }
-
-IFontResourcePtr OSDRenderer::GetFont() {
+IFontResourcePtr WidgetRenderer::GetFont() {
     return font;
 }
 
-IFontResourcePtr OSDRenderer::GetSmallFont() {
+IFontResourcePtr WidgetRenderer::GetSmallFont() {
     return smallfont;
 }
 
-void OSDRenderer::Render(OSDButton& w) {
+void WidgetRenderer::Render(Button& w) {
     if (w.GetTexture() == NULL) {
         glBindTexture(GL_TEXTURE_2D, 0);
         CHECK_FOR_GL_ERROR();
@@ -77,19 +69,21 @@ void OSDRenderer::Render(OSDButton& w) {
         glEnable(GL_TEXTURE_2D);
         CHECK_FOR_GL_ERROR();
     }
-    Vector<2,int>   pos = w.GetPosition();
-    Vector<2,int>   dim(w.GetTexture()->GetWidth(), w.GetTexture()->GetHeight());// = w.GetDimensions();
+    Vector<2,int> pos = w.GetPosition();
+    Vector<2,int> dim(w.GetTexture()->GetWidth(), w.GetTexture()->GetHeight());
     float col[4];
     
-    if (w.GetActive()) 
-        activeColor.ToArray(col);
-    else 
-        inactiveColor.ToArray(col);
-    
-    if (w.GetFocus()) {
-        pos = pos - Vector<2,int>(3,3);
-        dim = dim + Vector<2,int>(1,1);
+    if (w.GetActive()) {
+        pos = pos + Vector<2,int>(1,1);
+        activeColor.ToArray(col); 
     }
+    else {
+        inactiveColor.ToArray(col);
+        pos = pos - Vector<2,int>(1,1);
+    }
+    if (w.GetFocus()) {
+    }
+    else {}
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -107,7 +101,7 @@ void OSDRenderer::Render(OSDButton& w) {
     glEnd();    
 }
 
-void OSDRenderer::Render(OSDSlider& w) {
+void WidgetRenderer::Render(Slider& w) {
     glBindTexture(GL_TEXTURE_2D, sliderTex->GetID());
     glEnable(GL_TEXTURE_2D);
 
@@ -146,55 +140,95 @@ void OSDRenderer::Render(OSDSlider& w) {
     glEnd();    
 }
 
-void OSDRenderer::Render(OSDCircularSlider& w) {
+void WidgetRenderer::Render(CircularSlider& w) {
     Vector<2,int> pos = w.GetPosition();
     Vector<2,int> dim = w.GetDimensions();
     pos += Vector<2,int>(0.5 * dim[0], 0.5 * dim[1]);
-    Vector<4,float> colr(.7,.0,.0,.9);
-    GLUquadric* q = gluNewQuadric();
+    float colr[4];
+    activeColor.ToArray(colr);
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glPushMatrix();
-    glTranslatef(pos[0], pos[1], -1);
-    // glColor4f(colr[0], colr[1], colr[2], colr[3]);
-    // gluDisk(q, 0.5*dim[0]*0.8, 0.5*dim[0], 20, 1);
-    glColor4f(0.0, 0.0, 1.0, 1.0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-    if (w.GetActive()) {
-        gluPartialDisk(q, 0.5 * dim[0] * 0.8, 0.5 * dim[0], 20, 1, 90 + w.GetStartAngle(), 
-                       w.GetSweep());
-    }
-    glPopMatrix();
-    gluDeleteQuadric(q);
-
-    dim = Vector<2,int>(w.GetTexture()->GetWidth(),w.GetTexture()->GetHeight());
-    pos = pos - Vector<2,int>(0.5 * dim[0], 0.5 * dim[1]);
-    if (w.GetTexture() == NULL) {
+    Vector<2,int> dim_tex = Vector<2,int>(w.GetValueTexture()->GetWidth(),
+                                          w.GetValueTexture()->GetHeight());
+    Vector<2,int> pos_tex = pos - Vector<2,int>(0.5 * dim_tex[0], 0.5 * dim_tex[1]);
+    if (w.GetValueTexture() == NULL) {
         glBindTexture(GL_TEXTURE_2D, 0);
         CHECK_FOR_GL_ERROR();
     }
     else {
-        glBindTexture(GL_TEXTURE_2D, w.GetTexture()->GetID());
+        glBindTexture(GL_TEXTURE_2D, w.GetValueTexture()->GetID());
         glEnable(GL_TEXTURE_2D);
         CHECK_FOR_GL_ERROR();
     }
     glEnable(GL_TEXTURE_2D);
     //draw value
-    glColor4f(0.0, 0.0, 0.0, 1.0);
+    glColor4f(colr[0], colr[1],colr[2],colr[3]);
     glBegin(GL_QUADS);
     glTexCoord2f(0.0, 0.0);
-    glVertex3f(pos[0], pos[1], -1.0);
+    glVertex3f(pos_tex[0], pos_tex[1], -1.0);
     glTexCoord2f(0.0, 1.0);
-    glVertex3f(pos[0], pos[1] + dim[1], -1.0);
+    glVertex3f(pos_tex[0], pos_tex[1] + dim_tex[1], -1.0);
     glTexCoord2f(1.0, 1.0);
-    glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
+    glVertex3f(pos_tex[0] + dim_tex[0], pos_tex[1] + dim_tex[1], -1.0);
     glTexCoord2f(1.0, 0.0);
-    glVertex3f(pos[0] + dim[0], pos[1], -1.0);
+    glVertex3f(pos_tex[0] + dim_tex[0], pos_tex[1], -1.0);
     glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    GLUquadric* q = gluNewQuadric();
+    if (w.GetFocus()) {
+        glPushMatrix();
+        glTranslatef(pos[0], pos[1], -1);
+        glColor4f(0.0, 0.0, 1.0, 0.1);
+        gluDisk(q, 0.5*dim[0]*0.8, 0.5*dim[0], 20, 1);
+        glPopMatrix();
+    }
+    if (w.GetActive()) {
+        glPushMatrix();
+        glTranslatef(pos[0], pos[1], -1);
+        // glColor4f(0.2, 0.2, 1.0, .9);
+        glColor4f(inactiveColor[0], inactiveColor[1], inactiveColor[2], inactiveColor[3]);
+        gluPartialDisk(q, 0.5 * dim[0] * 0.8, 
+                       0.5 * dim[0], 
+                       20, 
+                       1, 
+                       90 + w.GetStartAngle(), 
+                       w.GetSweep());
+        glPopMatrix();
+    }
+    if (w.GetFocus()) {
+        if (w.GetTextTexture() == NULL) {
+            glBindTexture(GL_TEXTURE_2D, 0);
+            CHECK_FOR_GL_ERROR();
+        }
+        else {
+            glBindTexture(GL_TEXTURE_2D, w.GetTextTexture()->GetID());
+            glEnable(GL_TEXTURE_2D);
+            CHECK_FOR_GL_ERROR();
+        }
+        //draw value
+        pos_tex[0] = w.GetPosition()[0] + 0.5*w.GetDimensions()[0] - 0.5*w.GetTextTexture()->GetWidth();
+        pos_tex[1] = w.GetPosition()[1] + 0.9*w.GetDimensions()[1] - 0.5*w.GetTextTexture()->GetHeight();
+        colr[3] = 0.6;
+        glColor4fv(colr);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0);
+        glVertex3f(pos_tex[0], pos_tex[1], -1.0);
+        glTexCoord2f(0.0, 1.0);
+        glVertex3f(pos_tex[0], pos_tex[1] + w.GetTextTexture()->GetHeight(), -1.0);
+        glTexCoord2f(1.0, 1.0);
+        glVertex3f(pos_tex[0] + w.GetTextTexture()->GetWidth(), 
+                   pos_tex[1] + w.GetTextTexture()->GetHeight(), -1.0);
+        glTexCoord2f(1.0, 0.0);
+        glVertex3f(pos_tex[0] + w.GetTextTexture()->GetWidth(), pos_tex[1], -1.0);
+        glEnd();
+    }
+    gluDeleteQuadric(q);
+
 }
 
-void OSDRenderer::Render(OSDCollection& w) {
+void WidgetRenderer::Render(Collection& w) {
     //draw bg
     int pad = 10;
     Vector<2,int> pos = w.GetPosition();
@@ -205,7 +239,7 @@ void OSDRenderer::Render(OSDCollection& w) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glBegin(GL_QUADS);
-    glColor4f(0.0,0.0,1.0,.1);
+    glColor4f(0.7,0.7,.9,0.9);
     glVertex3f(pos[0], pos[1], -1.0);
     glVertex3f(pos[0], pos[1] + dim[1], -1.0);
     glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
@@ -213,17 +247,18 @@ void OSDRenderer::Render(OSDCollection& w) {
     glEnd();
     // border
     glLineWidth(4.0);
-    glDisable(GL_BLEND);
+    glEnable(GL_BLEND);
     glBegin(GL_LINE_STRIP);
-    glColor4f(0.0, 0.0, 1.0, 1.0);
+    // glColor4f(0.3, 0.3, 1.0, 0.8);
+    glColor4f(activeColor[0], activeColor[1], activeColor[2], activeColor[3]);
     glVertex3f(pos[0], pos[1], -1.0);
     glVertex3f(pos[0], pos[1] + dim[1], -1.0);
     glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
     glVertex3f(pos[0] + dim[0], pos[1], -1.0);
     glVertex3f(pos[0], pos[1], -1.0);
     glEnd();
-    list<OSDIWidget*> widgets = w.GetWidgets();
-    for (list<OSDIWidget*>::iterator i = widgets.begin();
+    list<IWidget*> widgets = w.GetWidgets();
+    for (list<IWidget*>::iterator i = widgets.begin();
          i != widgets.end();
          i++) {
         (*i)->Accept(*this);

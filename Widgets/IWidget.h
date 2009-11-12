@@ -7,15 +7,18 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_OSD_INTERFACE_WIDGET_
-#define _OE_UTILS_OSD_INTERFACE_WIDGET_
+#ifndef _OE_WIDGETS_INTERFACE_WIDGET_
+#define _OE_WIDGETS_INTERFACE_WIDGET_
 
 #include <Math/Vector.h>
+#include <Resources/IFontResource.h>
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 
-class OSDIRenderer;
+using Resources::IFontResourcePtr;
+class IWidgetRenderer;
+class WidgetRenderer;
 class PointingDevice;
 
 /**
@@ -26,9 +29,9 @@ class PointingDevice;
  * It can receive focus (e.g from a cursor) and it can be
  * activated/deactivated.
  *  
- * Widget rendering is handled by the OSDIRenderer class. Rendering
+ * Widget rendering is handled by the IRenderer class. Rendering
  * uses visitor pattern and as such all widgets must implements the
- * accept method with a callback to the OSDIRenderer.
+ * accept method with a callback to the IRenderer.
  *
  * An example use pattern with a mouse could be: 
  *
@@ -40,16 +43,16 @@ class PointingDevice;
  *
  *  * OnRenderPhase() { r.Render(w) } 
  *
- * @see OSDIRenderer
+ * @see IRenderer
  *
- * @class OSDIWidget OSDIWidget.h OpenGLSelection/Utils/OSDIWidget.h
+ * @class IWidget IWidget.h OpenGLSelection/Utils/IWidget.h
  */
-class OSDIWidget {
+class IWidget {
 public:
     /**
      * Empty destructor.
      */
-    virtual ~OSDIWidget() {};
+    virtual ~IWidget() {};
     
     /**
      * Get the position of the widget.
@@ -75,11 +78,11 @@ public:
     /**
      * The rendering (visitor callback) method.  Every widget should
      * implement this method with a call to the corresponding Render()
-     * method of the OSDIRenderer.
+     * method of the IRenderer.
      *
      * @param r the on screen display renderer.
      */
-    virtual void Accept(OSDIRenderer& r) = 0;
+    virtual void Accept(IWidgetRenderer& r) = 0;
 
     // input methods
     /**
@@ -93,7 +96,7 @@ public:
      * @param y the second hit coordinate.
      * @return the widget that was hit or NULL if no widget was hit.
      */
-    virtual OSDIWidget* WidgetAt(int x, int y) = 0;   
+    virtual IWidget* WidgetAt(int x, int y) = 0;   
 
     /**
      * Same as WidgetAt with the addition that a non-hit triggers a
@@ -105,7 +108,7 @@ public:
      * @param y the second hit coordinate.
      * @return the widget that was hit or NULL if no widget was hit.
      */
-    virtual OSDIWidget* FocusAt(int x, int y) = 0;    
+    virtual IWidget* FocusAt(int x, int y) = 0;    
 
     /**
      * Same as WidgetAt with the addition that a non-hit triggers a
@@ -117,7 +120,7 @@ public:
      * @param y the second hit coordinate.
      * @return the widget that was hit or NULL if no widget was hit.
      */
-    virtual OSDIWidget* ActivateAt(int x, int y) = 0; 
+    virtual IWidget* ActivateAt(int x, int y) = 0; 
 
     /**
      * Activate a focused widget
@@ -127,7 +130,7 @@ public:
      *
      * @return the widget that was activated.
      */
-    virtual OSDIWidget* ActivateFocus() = 0;         
+    virtual IWidget* ActivateFocus() = 0;         
 
     /**
      * Reset the widget.
@@ -166,8 +169,12 @@ public:
      */
     virtual bool GetFocus() = 0;
 
+    // used to create font textures from fonts determined by the renderer.
+    virtual void SetupFonts(WidgetRenderer& r) = 0;
+
+    
 };
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_OSD_INTERFACE_WIDGET_
+#endif //_OE_WIDGETS_INTERFACE_WIDGET_

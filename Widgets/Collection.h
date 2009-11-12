@@ -7,58 +7,61 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_OSD_COLLECTION_
-#define _OE_UTILS_OSD_COLLECTION_
+#ifndef _OE_UTILS_WIDGETS_COLLECTION_
+#define _OE_UTILS_WIDGETS_COLLECTION_
 
-#include <Utils/OSDIWidget.h>
+#include <Widgets/IWidget.h>
 #include <list>
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 
-enum ResetMode {SIMPLE, RADIO};
+enum ResetMode {SIMPLE, RADIO, TOGGLE};
 /**
  * On Screen Display - Collection of Widgets.  
  *
  * A button has positional info, can receive input events and can be
  * rendered. 
  *
- * @class OSDCollection OSDCollection.h OpenGLSelection/Utils/OSDCollection.h
+ * @class Collection Collection.h OpenGLSelection/Utils/Collection.h
  */
-class OSDCollection: public OSDIWidget {
+class Collection: public IWidget {
 private:
     ResetMode mode;
-    std::list<OSDIWidget*> widgets;
+    std::list<IWidget*> widgets;
     int x, y, dx, dy, width, height;
-    OSDIWidget *focusWidget;
+    IWidget *focusWidget;
     bool active, focus;
-    void UpdateWidgets();
 public:
-    OSDCollection(ResetMode mode);
-    virtual ~OSDCollection();
+    explicit Collection(): mode(SIMPLE) {}
+    Collection(ResetMode mode);
+    virtual ~Collection();
     
-    // OSDIWidget
+    void UpdateWidgets();
+    // IWidget
     Math::Vector<2,int> GetPosition();
     Math::Vector<2,int> GetDimensions();
     void SetPosition(Math::Vector<2,int> pos);
     void SetDimensions(Math::Vector<2,int> dim);
-    void Accept(OSDIRenderer& r);
+    void Accept(IWidgetRenderer& r);
     bool GetActive();
     void SetActive(bool active);
     bool GetFocus();
     void SetFocus(bool focus);
-    OSDIWidget* WidgetAt(int x, int y);
-    OSDIWidget* FocusAt(int x, int y);
-    OSDIWidget* ActivateAt(int x, int y);
-    OSDIWidget* ActivateFocus();
+    IWidget* WidgetAt(int x, int y);
+    IWidget* FocusAt(int x, int y);
+    IWidget* ActivateAt(int x, int y);
+    IWidget* ActivateFocus();
     void Reset();
 
-    // OSDCollection
-    void AddWidget(OSDIWidget* w);
-    void RemoveWidget(OSDIWidget* w);
-    std::list<OSDIWidget*> GetWidgets();
+    void SetupFonts(WidgetRenderer& r);
+
+    // Collection
+    void AddWidget(IWidget* w);
+    void RemoveWidget(IWidget* w);
+    std::list<IWidget*> GetWidgets();
 };
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_OSD_COLLECTION_
+#endif //_OE_UTILS_WIDGETS_COLLECTION_

@@ -7,71 +7,71 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#include <Utils/OSDSlider.h>
-#include <Utils/OSDIRenderer.h>
+#include <Widgets/Slider.h>
+#include <Widgets/IWidgetRenderer.h>
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 
 using namespace Math;
 
-OSDSlider::OSDSlider(): 
+Slider::Slider(): 
     x(0)
     , y(0)
     , width(0)
     , height(0)
     , active(false)
     , focus(false)
-    , value(0.0)
+    , value(0)
 {}
 
-OSDSlider::~OSDSlider() {}
+Slider::~Slider() {}
     
-Vector<2,int> OSDSlider::GetPosition() {
+Vector<2,int> Slider::GetPosition() {
     return Vector<2,int>(x, y);
 }
 
-Vector<2,int> OSDSlider::GetDimensions() {
+Vector<2,int> Slider::GetDimensions() {
     return Vector<2,int>(width, height);
 }
 
-void OSDSlider::SetPosition(Vector<2,int> pos) {
+void Slider::SetPosition(Vector<2,int> pos) {
     x = pos[0];
     y = pos[1];
 }
 
-void OSDSlider::SetDimensions(Vector<2,int> dim) {
+void Slider::SetDimensions(Vector<2,int> dim) {
     width = dim[0];
     height = dim[1];
 }
 
-void OSDSlider::Accept(OSDIRenderer& r) {
+void Slider::Accept(IWidgetRenderer& r) {
     r.Render(*this);
 }
 
-OSDIWidget* OSDSlider::WidgetAt(int x, int y) {
+IWidget* Slider::WidgetAt(int x, int y) {
     if (x >= this->x && x < this->x + width && y >= this->y && y < this->y + height)
         return this;
     return NULL;
 }
 
-bool OSDSlider::GetActive() {
+bool Slider::GetActive() {
     return active;
 }
 
-void OSDSlider::SetActive(bool active) {
+void Slider::SetActive(bool active) {
     this->active = active;
 }
 
-bool OSDSlider::GetFocus() {
+bool Slider::GetFocus() {
     return focus;
 }
 
-void OSDSlider::SetFocus(bool focus) {
+void Slider::SetFocus(bool focus) {
     this->focus = focus;
 }
 
-OSDIWidget* OSDSlider::FocusAt(int x, int y) {
+IWidget* Slider::FocusAt(int x, int y) {
     if (active && width != 0) {
         SetValue(float(x - this->x) / float(width)); 
     }
@@ -83,7 +83,7 @@ OSDIWidget* OSDSlider::FocusAt(int x, int y) {
     return NULL;
 }
 
-OSDIWidget* OSDSlider::ActivateAt(int x, int y) {
+IWidget* Slider::ActivateAt(int x, int y) {
     if (WidgetAt(x,y)) {
         SetActive(true);
         return this;
@@ -92,7 +92,7 @@ OSDIWidget* OSDSlider::ActivateAt(int x, int y) {
     return NULL;
 }
 
-OSDIWidget* OSDSlider::ActivateFocus() {
+IWidget* Slider::ActivateFocus() {
     if (focus) {
         SetActive(true);
         return this;
@@ -100,18 +100,30 @@ OSDIWidget* OSDSlider::ActivateFocus() {
     return NULL;
 }
 
-void OSDSlider::Reset() {
+void Slider::Reset() {
     SetActive(false);
 }
 
-float OSDSlider::GetValue() {
+float Slider::GetValue() {
     return value;
 }
 
-void OSDSlider::SetValue(float value) {
+void Slider::SetValue(float value) {
     value = fmin(1.0, value); 
     value = fmax(0.0, value); 
     this->value = value;
+}
+
+void Slider::SetSmallFont(IFontResourcePtr font) {
+
+}
+
+void Slider::SetLargeFont(IFontResourcePtr font) {
+
+}
+
+void Slider::SetupFonts(WidgetRenderer& r) {
+
 }
 
 

@@ -7,10 +7,11 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_OSD_BUTTON_
-#define _OE_UTILS_OSD_BUTTON_
+#ifndef _OE_UTILS_WIDGETS_BUTTON_
+#define _OE_UTILS_WIDGETS_BUTTON_
 
-#include <Utils/OSDIWidget.h>
+#include <Widgets/IWidget.h>
+#include <Core/Event.h>
 
 #include <Math/Vector.h>
 #include <Resources/IFontTextureResource.h>
@@ -18,11 +19,18 @@
 #include <string.h>
 
 namespace OpenEngine {
-namespace Utils {
+namespace Widgets {
 
 using std::string;
+using Core::Event;
 
-class OSDRenderer;
+class WidgetRenderer;
+
+class StateChangedEvent{
+public:
+    bool state;
+    StateChangedEvent(bool state): state(state) {}
+};
 
 /**
  * On Screen Display Button Class.  
@@ -30,24 +38,33 @@ class OSDRenderer;
  * A button has positional info, can receive input events and can be
  * rendered.  
  *
- * @class OSDButton OSDButton.h OpenGLSelection/Utils/OSDButton.h
+ * @class Button Button.h OpenGLSelection/Utils/Button.h
  */
-class OSDButton: public OSDIWidget {
+class Button: public IWidget {
 private:
     Resources::IFontTextureResourcePtr texr;
     Math::Vector<4,float> colr, activeColr;
     int x, y, width, height;
     bool active, focus;
+    Event<StateChangedEvent> e;
+    string caption;
 public:
-    OSDButton(OSDRenderer& r);
-    //OSDButton(Resources::ITextureResourcePtr texr);
-    virtual ~OSDButton();
+    Event<StateChangedEvent>& ChangedEvent() {return e;}
+
+    void SetSmallFont(IFontResourcePtr font);
+    void SetLargeFont(IFontResourcePtr font);
+    void SetupFonts(WidgetRenderer& r);
+
+    explicit Button();
+    Button(WidgetRenderer& r);
+    //Button(Resources::ITextureResourcePtr texr);
+    virtual ~Button();
     
     Math::Vector<2,int> GetPosition();
     Math::Vector<2,int> GetDimensions();
     void SetPosition(Math::Vector<2,int> pos);
     void SetDimensions(Math::Vector<2,int> dim);
-    void Accept(OSDIRenderer& r);
+    void Accept(IWidgetRenderer& r);
     bool GetActive();
     void SetActive(bool active);
     bool GetFocus();
@@ -55,10 +72,10 @@ public:
     void SetCaption(string text);
     string GetCaption();
 
-    OSDIWidget* WidgetAt(int x, int y);
-    OSDIWidget* FocusAt(int x, int y);
-    OSDIWidget* ActivateAt(int x, int y);
-    OSDIWidget* ActivateFocus();
+    IWidget* WidgetAt(int x, int y);
+    IWidget* FocusAt(int x, int y);
+    IWidget* ActivateAt(int x, int y);
+    IWidget* ActivateFocus();
     void Reset();
 
     // Math::Vector<4,float> GetColor();
@@ -71,4 +88,4 @@ public:
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_OSD_BUTTON_
+#endif //_OE_UTILS_WIDGETS_BUTTON_
