@@ -73,20 +73,37 @@ Vector<2,float> GLSceneSelection::Project(Vector<3,float> point, Viewport& viewp
     GLdouble proj[16];
     GLdouble model[16];
     IViewingVolume* volume = viewport.GetViewingVolume();
+    for (int i = 0; i < 4; i++) {
+        vp[i] = viewport.GetDimension()[i];
+        for (int j = 0; j < 4; j++) {
+            proj[i*4+j]      = volume->GetProjectionMatrix()(i,j);
+            model[i*4+j]     = volume->GetViewMatrix()(i, j);
+        }
+    }
+    gluProject(point[0], point[1], point[2], model, proj, vp, &px, &py, &pz);
+    return Vector<2,float>(float(px), frame.GetHeight()-float(py));
+    /*
+    GLdouble px, py, pz;
+    GLint vp[4];
+    GLdouble proj[16];
+    GLdouble model[16];
+    IViewingVolume* volume = viewport.GetViewingVolume();
     float fproj[16];
     float fmodel[16];
     viewport.GetDimension().ToArray(vp);
     volume->GetProjectionMatrix().ToArray(fproj);
     volume->GetViewMatrix().ToArray(fmodel);
     for (int i = 0; i < 16; i++) {
-        proj[i]      = fproj[i];
+        proj[i]  = fproj[i];
         model[i] = fmodel[i];
     }
     gluProject(point[0], point[1], point[2], model, proj, vp, &px, &py, &pz);
     return Vector<2,float>(float(px), frame.GetHeight()-float(py));
+    */
 }
 
 Ray GLSceneSelection::Unproject(int x, int y, Viewport& viewport) {
+    /*
     GLdouble rx, ry, rz;
     GLint vp[4];
     GLdouble proj[16];
@@ -101,6 +118,23 @@ Ray GLSceneSelection::Unproject(int x, int y, Viewport& viewport) {
     for (int i = 0; i < 16; i++) {
         proj[i]      = fproj[i];
         model[i]     = fmodel[i];
+    }
+    gluUnProject(x, frame.GetHeight()-y, 0.0f, model, proj, vp, &rx, &ry, &rz);
+    Vector<3,float> p1(rx, ry, rz);
+    return Ray(volume->GetPosition(), p1-volume->GetPosition());
+    */
+    GLdouble rx, ry, rz;
+    GLint vp[4];
+    GLdouble proj[16];
+    GLdouble model[16];
+    IViewingVolume* volume = viewport.GetViewingVolume();
+    // conversion from float to double
+    for (int i = 0; i < 4; i++) {
+        vp[i] = viewport.GetDimension()[i];
+        for (int j = 0; j < 4; j++) {
+            proj[i*4+j]      = volume->GetProjectionMatrix()(i,j);
+            model[i*4+j]     = volume->GetViewMatrix()(i, j);
+        }
     }
     gluUnProject(x, frame.GetHeight()-y, 0.0f, model, proj, vp, &rx, &ry, &rz);
     Vector<3,float> p1(rx, ry, rz);
