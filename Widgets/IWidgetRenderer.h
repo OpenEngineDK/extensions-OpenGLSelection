@@ -15,6 +15,7 @@ namespace Widgets {
 
 class Button;
 class Slider;
+template <class T>
 class CircularSlider;
 class Collection;
 
@@ -27,10 +28,11 @@ class IWidgetRenderer {
 private:
 public:
     virtual ~IWidgetRenderer() {};
-    virtual void Render(Button& w) = 0;
-    virtual void Render(Slider& w) = 0;
-    virtual void Render(CircularSlider& w) = 0;
-    virtual void Render(Collection& w) = 0;
+    virtual void Visit(Button* w) = 0;
+    virtual void Visit(Slider* w) = 0;
+    virtual void Visit(CircularSlider<float>* w) = 0;
+    virtual void Visit(CircularSlider<int>* w) = 0;
+    virtual void Visit(Collection* w) = 0;
 };
 
 } // NS Utils

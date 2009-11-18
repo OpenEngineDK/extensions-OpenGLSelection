@@ -18,9 +18,9 @@
            i != tools.end();                         \
            i++)                                      \
   {                                                  \
-      if (!(*i)->Handle(e)) return false;            \
+      if ((*i)->Handle(e)) return true;              \
   }                                                  \
-  return true                        
+  return false                        
  
 namespace OpenEngine {
 namespace Utils {

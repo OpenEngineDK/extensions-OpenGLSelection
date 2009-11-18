@@ -61,21 +61,27 @@ public:
     _mutators.AddMutator(m);                                          \
     }
 
-#define FLOAT_VALUE(fname, getfunc, setfunc, objtype)                   \
-    {                                                                   \
-    class _mutator_class: public IListener<ValueChangedEvent>, public Mutator {        \
+#define INT_VALUE(fname, getfunc, setfunc, objtype) \
+  VALUE(fname, getfunc, setfunc, objtype, int, 0, 1)
+
+#define FLOAT_VALUE(fname, getfunc, setfunc, objtype)                \
+  VALUE(fname, getfunc, setfunc, objtype, float, 0.0, 0.15)
+
+#define VALUE(fname, getfunc, setfunc, objtype, vtype, init, step)   \
+ {                                                                   \
+    class _mutator_class: public IListener<ValueChangedEventArg<vtype> >, public Mutator { \
         private:                                                        \
           objtype* obj;                                                 \
         public:                                                         \
           _mutator_class(objtype* obj): obj(obj) {  }                   \
-          void Handle(ValueChangedEvent e) { obj->setfunc(e.value); }   \
+          void Handle(ValueChangedEventArg<vtype> e) { obj->setfunc(e.value); } \
         };                                                              \
         _mutator_class* m = new _mutator_class(this);                   \
-        CircularSlider* w = new CircularSlider();                 \
+        CircularSlider<vtype>* w = new CircularSlider<vtype>(init,step); \
         w->SetText(#fname);                                             \
         w->SetDimensions(Vector<2,int>(40,40));                         \
         w->SetValue(this->getfunc());                                   \
-        w->ChangedEvent().Attach(*m);                                   
+        w->ValueChangedEvent().Attach(*m);                                   
 
 
 #define BUTTON_STATE(fname, getfunc, setfunc, objtype)                  \
@@ -91,7 +97,7 @@ public:
         Collection* w = new Collection(TOGGLE);                         \
         Button* c = new Button();                                       \
         c->SetActive(this->getfunc());                                  \
-        c->SetCaption(#fname);                                          \
+        c->SetText(#fname);                                             \
         c->SetDimensions(Vector<2,int>(40,40));                         \
         c->ChangedEvent().Attach(*m);                                   \
         w->AddWidget(c);                                               

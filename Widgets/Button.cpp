@@ -9,7 +9,6 @@
 
 #include <Widgets/Button.h>
 #include <Widgets/IWidgetRenderer.h>
-#include <Widgets/WidgetRenderer.h>
 
 #include <Renderers/TextureLoader.h>
 
@@ -29,26 +28,6 @@ Button::Button()
     , focus(false) 
 {
 }
-Button::Button(WidgetRenderer& r)
-    : texr(r.GetFont()->CreateFontTexture())
-    , x(0)
-    , y(0)
-    , width(0)
-    , height(0)
-    , active(false)
-    , focus(false) 
-{
-    r.GetTextureLoader().Load(texr, TextureLoader::RELOAD_IMMEDIATE);
-}
-
-// Button::Button(ITextureResourcePtr texr): 
-//     texr(texr)
-//     , x(0)
-//     , y(0)
-//     , width(texr->GetWidth())
-//     , height(texr->GetHeight())
-//     , active(false)
-//     , focus(false) {}
 
 Button::~Button() {}
     
@@ -70,26 +49,8 @@ void Button::SetDimensions(Vector<2,int> dim) {
     height = dim[1];
 }
 
-ITextureResourcePtr Button::GetTexture() {
-    return texr;
-}
-
-void Button::SetCaption(string text) {
-    caption = text;
-    if (texr) { 
-        texr->SetText(text);
-        width = texr->GetWidth();
-        height = texr->GetHeight();
-    }
-}
-
-string Button::GetCaption() {
-    return caption;
-}
-
-
 void Button::Accept(IWidgetRenderer& r) {
-    r.Render(*this);
+    r.Visit(this);
 }
 
 IWidget* Button::WidgetAt(int x, int y) {
@@ -145,23 +106,5 @@ void Button::Reset() {
     SetActive(false);
 }
 
-void Button::SetSmallFont(IFontResourcePtr font) {
-
-}
-
-void Button::SetLargeFont(IFontResourcePtr font) {
-
-}
-
-void Button::SetupFonts(WidgetRenderer& r) {
-    texr = r.GetFont()->CreateFontTexture();
-    texr->SetText(caption);
-    width = texr->GetWidth();
-    height = texr->GetHeight();
-    r.GetTextureLoader().Load(texr, TextureLoader::RELOAD_IMMEDIATE);
-
-}
-
-
-} // NS Utils
+} // NS Widgets
 } // NS OpenEngine

@@ -24,7 +24,6 @@ Collection::Collection(ResetMode mode)
     , y(0) 
     , width(0) 
     , height(0)
-      //, activeWidget(NULL)
     , focusWidget(NULL)
     , active(false)
     , focus(false)
@@ -58,7 +57,7 @@ void Collection::SetDimensions(Vector<2,int> dim) {
 }
 
 void Collection::Accept(IWidgetRenderer& r) {
-    r.Render(*this);
+    r.Visit(this);
 }
 
 IWidget* Collection::WidgetAt(int x, int y) {
@@ -77,11 +76,6 @@ IWidget* Collection::WidgetAt(int x, int y) {
 }
 
 bool Collection::GetActive() {
-    // for (list<IWidget*>::iterator itr = widgets.begin(); 
-    //      itr != widgets.end();
-    //      itr++) {
-    //     if ((*itr)->GetActive()) return true;
-    // }
     return active;
 }
 
@@ -130,10 +124,7 @@ IWidget* Collection::FocusAt(int x, int y) {
         return this;
     }
     SetFocus(false);
-    // if (focusWidget) focusWidget->SetFocus(false);
-    // focusWidget = WidgetAt(x,y);
-    // if (focusWidget) focusWidget->FocusAt(x, y);
-    return focusWidget;
+    return NULL;
 }
 
 IWidget* Collection::ActivateAt(int x, int y) {
@@ -149,7 +140,6 @@ IWidget* Collection::ActivateAt(int x, int y) {
 }
 
 IWidget* Collection::ActivateFocus() {
-    IWidget* w = NULL;
     if (!focusWidget) {
         if (GetFocus()) {
             SetActive(true);
@@ -157,26 +147,25 @@ IWidget* Collection::ActivateFocus() {
         }
         else return NULL;
     }
-
     if (mode == SIMPLE || mode == RADIO) {
-        for (list<IWidget*>::iterator itr = widgets.begin(); 
+       for (list<IWidget*>::iterator itr = widgets.begin(); 
              itr != widgets.end();
              itr++) {
-            w = (*itr)->ActivateFocus();
+           IWidget* w;
+           if (w = (*itr)->ActivateFocus()) return w;
         }
     }
     if (mode == TOGGLE) {
-        for (list<IWidget*>::iterator itr = widgets.begin(); 
+       for (list<IWidget*>::iterator itr = widgets.begin(); 
              itr != widgets.end();
          itr++) {
-            IWidget* _w = (*itr); 
-            if (_w->GetFocus()) {
-                _w->SetActive(!_w->GetActive());
-                w = _w;
+            IWidget* w = (*itr); 
+            if (w->GetFocus()) {
+                w->SetActive(!w->GetActive());
+                return w;
             }
-        }
+       }
     }
-    if (w) return w;
     return NULL;
 }
 
@@ -216,14 +205,6 @@ void Collection::UpdateWidgets() {
         acc_y += w->GetDimensions()[1] + y_space;
     }
     height = acc_y-y;
-}
-
-void Collection::SetupFonts(WidgetRenderer& r) {
-    for (list<IWidget*>::iterator itr = widgets.begin(); 
-         itr != widgets.end();
-         itr++) {
-        (*itr)->SetupFonts(r);
-    }
 }
 
 

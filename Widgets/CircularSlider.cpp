@@ -9,9 +9,6 @@
 
 #include <Widgets/CircularSlider.h>
 #include <Widgets/IWidgetRenderer.h>
-#include <Widgets/WidgetRenderer.h>
-#include <Renderers/TextureLoader.h>
-
 #include <Math/Math.h>
 
 #include <Logging/Logger.h>
@@ -23,33 +20,6 @@ using namespace Math;
 using namespace Resources;
 using namespace Renderers;
 
-CircularSlider::CircularSlider()
-    :  x(0)
-    , y(0)
-    , width(0)
-    , height(0)
-    , active(false)
-    , focus(false)
-    , value(0.0)
-    , step(0.15)
-{
-    SetValue(0.0);
-    // r.GetTextureLoader().Load(texr, TextureLoader::RELOAD_IMMEDIATE);
-}
-CircularSlider::CircularSlider(WidgetRenderer& r)
-    : x(0)
-    , y(0)
-    , width(0)
-    , height(0)
-    , active(false)
-    , focus(false)
-    , value(0.0)
-    , step(0.15)
-{
-    SetValue(0.0);
-    SetupFonts(r);
-    // r.GetTextureLoader().Load(val_texr, TextureLoader::RELOAD_IMMEDIATE);
-}
 
 CircularSlider::~CircularSlider() {}
     
@@ -74,7 +44,7 @@ void CircularSlider::SetDimensions(Vector<2,int> dim) {
 }
 
 void CircularSlider::Accept(IWidgetRenderer& r) {
-    r.Render(*this);
+    r.Visit(this);
 }
 
 IWidget* CircularSlider::WidgetAt(int x, int y) {
@@ -153,18 +123,18 @@ void CircularSlider::Reset() {
     SetActive(false);
 }
 
-float CircularSlider::GetValue() {
+T CircularSlider::GetValue() {
     return value;
 }
 
-void CircularSlider::SetValue(float value) {
+void CircularSlider::SetValue(T value) {
     this->value = value;
-    char s[10];
-    sprintf(s, "%.1f", value);
-    if (val_texr) { 
-        val_texr->SetText(s);
-    }
-    e.Notify(ValueChangedEvent(value));
+    // char s[10];
+    // sprintf(s, "%.1f", value);
+    // if (val_texr) { 
+    //     val_texr->SetText(s);
+    // }
+    e.Notify(ValueChangedEventArg<T>(value, this));
 }
 
 float CircularSlider::GetStartAngle() {
@@ -175,33 +145,5 @@ float CircularSlider::GetSweep() {
     return sweep;
 }
 
-ITextureResourcePtr CircularSlider::GetValueTexture() {
-    return val_texr;
-}
-
-ITextureResourcePtr CircularSlider::GetTextTexture() {
-    return text_texr;
-}
-
-void CircularSlider::SetupFonts(WidgetRenderer& r) {
-    val_texr = r.GetSmallFont()->CreateFontTexture();
-    text_texr = r.GetSmallFont()->CreateFontTexture();
-    char s[10];
-    sprintf(s, "%.1f", value);
-    r.GetTextureLoader().Load(val_texr, TextureLoader::RELOAD_IMMEDIATE);
-    r.GetTextureLoader().Load(text_texr, TextureLoader::RELOAD_IMMEDIATE);
-    val_texr->SetText(s);
-    text_texr->SetText(text);
-}
-
-void CircularSlider::SetText(string text) {
-    this->text = text;
-    if (text_texr) text_texr->SetText(text);
-}
-
-string CircularSlider::GetText() {
-    return text;
-}
-
-} // NS Utils
+} // NS Widgets
 } // NS OpenEngine

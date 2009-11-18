@@ -11,15 +11,27 @@
 #define _OE_WIDGETS_INTERFACE_WIDGET_
 
 #include <Math/Vector.h>
-#include <Resources/IFontResource.h>
+#include <Core/Event.h>
+
+#include <string>
 
 namespace OpenEngine {
 namespace Widgets {
 
-using Resources::IFontResourcePtr;
+using Core::Event;
+using std::string;
+
 class IWidgetRenderer;
 class WidgetRenderer;
 class PointingDevice;
+class IWidget;
+
+class TextChangedEventArg {
+public:
+    string text;
+    IWidget* widget;
+    TextChangedEventArg(string text, IWidget* widget): text(text), widget(widget) {}
+};
 
 /**
  * On Screen Display Widget Interface.
@@ -48,6 +60,9 @@ class PointingDevice;
  * @class IWidget IWidget.h OpenGLSelection/Utils/IWidget.h
  */
 class IWidget {
+protected:
+    string text;
+    Event<TextChangedEventArg> textEvent;
 public:
     /**
      * Empty destructor.
@@ -169,10 +184,11 @@ public:
      */
     virtual bool GetFocus() = 0;
 
-    // used to create font textures from fonts determined by the renderer.
-    virtual void SetupFonts(WidgetRenderer& r) = 0;
-
+    virtual string GetText() { return text; }
     
+    virtual void SetText(string text) { this->text = text; textEvent.Notify(TextChangedEventArg(text, this)); };
+    
+    Event<TextChangedEventArg>& TextChangedEvent() { return textEvent; }
 };
 
 } // NS Utils

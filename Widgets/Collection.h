@@ -33,7 +33,7 @@ private:
     IWidget *focusWidget;
     bool active, focus;
 public:
-    explicit Collection(): mode(SIMPLE) {}
+    Collection(): mode(SIMPLE) {}
     Collection(ResetMode mode);
     virtual ~Collection();
     
@@ -53,8 +53,6 @@ public:
     IWidget* ActivateAt(int x, int y);
     IWidget* ActivateFocus();
     void Reset();
-
-    void SetupFonts(WidgetRenderer& r);
 
     // Collection
     void AddWidget(IWidget* w);

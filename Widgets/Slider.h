@@ -35,10 +35,6 @@ public:
     Slider();
     virtual ~Slider();
 
-    void SetSmallFont(IFontResourcePtr font);
-    void SetLargeFont(IFontResourcePtr font);
-    void SetupFonts(WidgetRenderer& r);
-
     Math::Vector<2,int> GetPosition();
     Math::Vector<2,int> GetDimensions();
     void SetPosition(Math::Vector<2,int> pos);

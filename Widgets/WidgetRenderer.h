@@ -7,14 +7,20 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_WIDGETS_WIDGET_RENDERER_
-#define _OE_UTILS_WIDGETS_WIDGET_RENDERER_
+#ifndef _OE_WIDGETS_WIDGET_RENDERER_
+#define _OE_WIDGETS_WIDGET_RENDERER_
 
+#include <Widgets/IWidget.h>
 #include <Widgets/IWidgetRenderer.h>
 #include <Resources/ITextureResource.h>
+#include <Resources/IFontTextureResource.h>
 #include <Resources/IFontResource.h>
 #include <Math/Vector.h>
+#include <Core/IListener.h>
+#include <map>
+#include <list>
 
+#include <Widgets/CircularSlider.h>
 
 namespace OpenEngine {
     namespace Renderers {
@@ -23,9 +29,16 @@ namespace OpenEngine {
     }
 namespace Widgets {
 
+using Core::IListener;
+using Resources::IFontTextureResourcePtr;
+using Resources::IFontResourcePtr;
+using Resources::ITextureResourcePtr;
+using Renderers::TextureLoader;
+using std::map;
+using std::list;
+
 class Button;
 class Slider;
-class CircularSlider;
 class Collection;
 
 /**
@@ -35,25 +48,48 @@ class Collection;
  */
 class WidgetRenderer: public IWidgetRenderer {
 private:
-    Renderers::TextureLoader& texloader;
-    Resources::ITextureResourcePtr sliderTex;
-    Resources::IFontResourcePtr font;
-    Resources::IFontResourcePtr smallfont;
+    class Initializer: public IWidgetRenderer, IListener<TextChangedEventArg>, IListener<ValueChangedEventArg<float> >, IListener<ValueChangedEventArg<int> > {
+    private:
+        TextureLoader& texloader;
+        IFontResourcePtr largefont;
+        IFontResourcePtr smallfont;
+        map<IWidget*, IFontTextureResourcePtr>& text_map;
+        map<IWidget*, IFontTextureResourcePtr>& val_map;
+        inline ITextureResourcePtr LookupText(IWidget* w, IFontResourcePtr font);
+    public:
+        Initializer(TextureLoader& texloader,         
+                    map<IWidget*,IFontTextureResourcePtr>& text_map,
+                    map<IWidget*, IFontTextureResourcePtr>& val_map);
+        void Visit(Button* w);
+        void Visit(Slider* w);
+        void Visit(CircularSlider<float>* w);
+        void Visit(CircularSlider<int>* w);
+        void Visit(Collection* w);
+        void Handle(TextChangedEventArg e);
+        void Handle(ValueChangedEventArg<float> e);
+        void Handle(ValueChangedEventArg<int> e);
+    } initializer;
+
+    list<IWidget*> widgets;
+    //maps to hold widget font textures
+    map<IWidget*, IFontTextureResourcePtr> text_map;
+    map<IWidget*, IFontTextureResourcePtr> val_map;
+
+    ITextureResourcePtr sliderTex;
     Math::Vector<4,float> activeColor, inactiveColor;
+
 public:
     WidgetRenderer(Renderers::TextureLoader& texloader);
     virtual ~WidgetRenderer();
 
-    void Render(Button& w);
-    void Render(Slider& w);
-    void Render(CircularSlider& w);
-    void Render(Collection& w);
-    
-    Renderers::TextureLoader& GetTextureLoader();
-    Resources::IFontResourcePtr GetFont();
-    Resources::IFontResourcePtr GetSmallFont();
-    // void SetRenderer(Renderers::IRenderer& r);
-    // Renderers::IRenderer& GetRenderer();
+    void Visit(Button* w);
+    void Visit(Slider* w);
+    void Visit(CircularSlider<float>* w);
+    void Visit(CircularSlider<int>* w);
+    void Visit(Collection* w);
+
+    void RenderWidgets();
+    void AddWidget(IWidget* w);
 };
 
 } // NS Utils

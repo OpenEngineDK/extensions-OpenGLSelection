@@ -49,15 +49,9 @@ private:
     Event<StateChangedEvent> e;
     string caption;
 public:
-    Event<StateChangedEvent>& ChangedEvent() {return e;}
+    Event<StateChangedEvent>& ChangedEvent() { return e; }
 
-    void SetSmallFont(IFontResourcePtr font);
-    void SetLargeFont(IFontResourcePtr font);
-    void SetupFonts(WidgetRenderer& r);
-
-    explicit Button();
-    Button(WidgetRenderer& r);
-    //Button(Resources::ITextureResourcePtr texr);
+    Button();
     virtual ~Button();
     
     Math::Vector<2,int> GetPosition();
@@ -69,21 +63,11 @@ public:
     void SetActive(bool active);
     bool GetFocus();
     void SetFocus(bool focus);
-    void SetCaption(string text);
-    string GetCaption();
-
     IWidget* WidgetAt(int x, int y);
     IWidget* FocusAt(int x, int y);
     IWidget* ActivateAt(int x, int y);
     IWidget* ActivateFocus();
     void Reset();
-
-    // Math::Vector<4,float> GetColor();
-    // Math::Vector<4,float> GetActiveColor();
-    Resources::ITextureResourcePtr GetTexture();
-    // void SetColor(Math::Vector<4,float> colr);
-    // void SetActiveColor(Math::Vector<4,float> colr);
-    // void SetTexture(Resources::ITextureResourcePtr texr);
 };
 
 } // NS Utils

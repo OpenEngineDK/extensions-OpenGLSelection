@@ -56,23 +56,22 @@ TransformationTool::TransformationTool(TextureLoader& texloader):
     ResourceManager<IFontResource>::AddPlugin(new SDLFontPlugin());
 
     osd_r = new WidgetRenderer(texloader);
-    f = osd_r->GetFont();
 
     osd_col = new Collection(SIMPLE);
     osd_col->SetPosition(Vector<2,int>(20, 20));
 
     osd_rad = new Collection(RADIO);
 
-    traBtn = new Button(*osd_r);
+    traBtn = new Button();
     osd_rad->AddWidget(traBtn);
-    traBtn->SetCaption("Translate");
+    traBtn->SetText("Translate");
     traBtn->SetActive(true);
-    rotBtn = new Button(*osd_r);
-    rotBtn->SetCaption("Rotate");
+    rotBtn = new Button();
+    rotBtn->SetText("Rotate");
     osd_rad->AddWidget(rotBtn);
 
-    sclBtn = new Button(*osd_r);
-    sclBtn->SetCaption("Scale");
+    sclBtn = new Button();
+    sclBtn->SetText("Scale");
     osd_rad->AddWidget(sclBtn);
     
     osd_col->AddWidget(osd_rad);
@@ -81,7 +80,7 @@ TransformationTool::TransformationTool(TextureLoader& texloader):
     slider->SetDimensions(Vector<2,int>(140,10));
     osd_col->AddWidget(slider);
 
-    CircularSlider* slider2 = new CircularSlider(*osd_r);
+    CircularSlider<float>* slider2 = new CircularSlider<float>(0.0, 0.15);
     slider2->SetDimensions(Vector<2,int>(40,40));
     osd_col->AddWidget(slider2);
 }
@@ -93,9 +92,9 @@ TransformationTool::~TransformationTool() {
 }
 
 bool TransformationTool::Handle(PointingDevice::MovedEventArg arg) {
-    if (selection.empty()) return true;
+    if (selection.empty()) return false;
     if (transformation->Transform(arg.state.x, arg.state.y, arg.dx, arg.dy, arg.select, selection, arg.vp))
-        return false;
+        return true;
     if (osd_col->FocusAt(arg.state.x, arg.state.y) == slider) {
         if (slider->GetValue() < 0.3) 
             f->SetFontStyle(FONT_STYLE_NORMAL);
@@ -103,11 +102,11 @@ bool TransformationTool::Handle(PointingDevice::MovedEventArg arg) {
             f->SetFontStyle(FONT_STYLE_BOLD);
         else f->SetFontStyle(FONT_STYLE_ITALIC);
     }
-    return false;
+    return true;
 }
 
 bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
-    if (selection.empty()) return true;
+    if (selection.empty()) return false;
     switch (arg.btn) {
     case 0x1:
         IWidget* w;
@@ -121,11 +120,11 @@ bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
             if (w == sclBtn) {
                 transformation = &scale;
             }
-            return false;
+            return true;
         }
         // see if we grab the transformation widget.
         if (transformation->GrabWidget(arg.state.x, arg.state.y, arg.select, selection, arg.vp))
-            return false;
+            return true;
         // check for selection hit in the scene
         list<ISceneNode*> ns = arg.select.SelectPoint(arg.state.x,
                                                   arg.state.y,
@@ -134,21 +133,21 @@ bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
         if (!ns.empty()) {
             TransformationNode* t = search.AncestorTransformationNode(ns.front());
             if (t && transformation->GrabSelection(arg.state.x, arg.state.y, arg.select, t, selection, arg.vp))
-                return false;
+                return true;
         }
     }
-    return true;
+    return false;
 }
 
 bool TransformationTool::Handle(PointingDevice::ReleasedEventArg arg) {
     switch (arg.btn) {
     case 0x1: 
         if (transformation->Reset())
-            return false;
+            return true;
         osd_col->Reset();//ActivateFocus(); 
         //@todo use OSDIWidget events instead of switches.
     };
-    return true;
+    return false;
 }
 
 void TransformationTool::Handle(SelectionSet<ISceneNode>::ChangedEventArg arg) {
@@ -250,7 +249,7 @@ void TransformationTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r
     // render the OSDCollection. The OSDRenderer does not setup the
     // ModelViewMatrix but simply uses the current..
     // osd_r->SetRenderer(r);
-    osd_r->Render(*osd_col);
+    osd_r->Visit(osd_col);
     glPopAttrib();
     glPopAttrib();
     glPopAttrib();

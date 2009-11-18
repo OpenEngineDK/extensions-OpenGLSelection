@@ -46,7 +46,7 @@ void Slider::SetDimensions(Vector<2,int> dim) {
 }
 
 void Slider::Accept(IWidgetRenderer& r) {
-    r.Render(*this);
+    r.Visit(this);
 }
 
 IWidget* Slider::WidgetAt(int x, int y) {
@@ -113,19 +113,6 @@ void Slider::SetValue(float value) {
     value = fmax(0.0, value); 
     this->value = value;
 }
-
-void Slider::SetSmallFont(IFontResourcePtr font) {
-
-}
-
-void Slider::SetLargeFont(IFontResourcePtr font) {
-
-}
-
-void Slider::SetupFonts(WidgetRenderer& r) {
-
-}
-
 
 } // NS Utils
 } // NS OpenEngine

@@ -14,6 +14,8 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Utils/TransformationTool.cpp
   Utils/CameraTool.h
   Utils/CameraTool.cpp
+  Utils/WidgetTool.h
+  Utils/WidgetTool.cpp
   Utils/ToolChain.h
   Utils/ToolChain.cpp
 
@@ -24,7 +26,7 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Widgets/Slider.h
   Widgets/Slider.cpp
   Widgets/CircularSlider.h
-  Widgets/CircularSlider.cpp
+#  Widgets/CircularSlider.cpp
   Widgets/WidgetRenderer.h
   Widgets/WidgetRenderer.cpp
   Widgets/Collection.h

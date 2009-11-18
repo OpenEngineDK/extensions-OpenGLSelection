@@ -20,9 +20,6 @@
 
 #include <Logging/Logger.h>
 
-#define dispatchEvent(e)                        \
-  vtmap[activeViewport]->Handle(e);
- 
 namespace OpenEngine {
 namespace Utils {
 
@@ -63,21 +60,13 @@ void MouseSelection::Handle(MouseMovedEventArg arg) {
                 break;
             }
         }
-        // for (list<Viewport*>::iterator itr = viewports.begin();
-        //      itr != viewports.end();
-        //      itr++) {
-        //     if (IsViewportActive(*itr, arg.x, arg.y)) {
-        //         activeViewport = *itr;
-        //         break;
-        //     }
-        // }
     }
     if (!activeViewport) return;
     Vector<4,int> d = activeViewport->GetDimension();
     pd->state.x = arg.x-d[0];
     pd->state.y = (d[3]+d[1])-(frame.GetHeight()-arg.y); 
     PointingDevice::MovedEventArg e(arg.dx, arg.dy, *scenesel, root, *pd, *activeViewport);
-    dispatchEvent(e);
+    vtmap[activeViewport]->Handle(e);
 }
 
 void MouseSelection::Handle(MouseButtonEventArg arg) {
@@ -102,7 +91,7 @@ void MouseSelection::Handle(MouseButtonEventArg arg) {
         if (arg.button & BUTTON_WHEEL_DOWN) {
             e.btn = 0x10;
         }
-        dispatchEvent(e);
+        vtmap[activeViewport]->Handle(e);
     }
     if (arg.type == EVENT_RELEASE) {
         PointingDevice::ReleasedEventArg e(0, *scenesel, root, *pd, *activeViewport);
@@ -118,7 +107,7 @@ void MouseSelection::Handle(MouseButtonEventArg arg) {
             pd->state.btns ^= 0x4;
             e.btn = 0x4;
         }
-        dispatchEvent(e);
+        vtmap[activeViewport]->Handle(e);
     }
 }
 
@@ -161,14 +150,6 @@ bool MouseSelection::IsViewportActive(Viewport* viewport, int x, int y) {
     }
     return false;
 }
-
-// void MouseSelection::AddViewport(Viewport* viewport) {
-//     viewports.push_back(viewport);
-// }
-
-// void MouseSelection::AddTool(ITool* tool) {
-//     tools.push_back(tool);
-// }
 
 void MouseSelection::BindTool(Viewport* vp, ITool* t) {
     vtmap[vp] = t;

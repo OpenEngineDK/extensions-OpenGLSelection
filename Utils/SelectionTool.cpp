@@ -34,10 +34,10 @@ using namespace Geometry;
 SelectionTool::SelectionTool(SelectionSet<ISceneNode>& ss): down_x(-1), down_y(-1), ss(ss) {}
 
 bool SelectionTool::Handle(PointingDevice::MovedEventArg arg) {
-    if (down_x == -1) return true;
+    if (down_x == -1) return false;
     x = arg.state.x;
     y = arg.state.y;
-    return false;
+    return true;
 }
 
 bool SelectionTool::Handle(PointingDevice::PressedEventArg arg) {
@@ -48,7 +48,7 @@ bool SelectionTool::Handle(PointingDevice::PressedEventArg arg) {
         ss.Clear();
         break;
     };
-    return false;
+    return true;
 }
 
 bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
@@ -56,7 +56,7 @@ bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
     case 1:
         // if we did not receive the down event...
         if (down_x == -1)
-            return true;
+            return false;
         list<ISceneNode*> selection;
         if (down_x == arg.state.x && down_y == arg.state.y) {
             selection = arg.select.SelectPoint(down_x,
@@ -79,7 +79,7 @@ bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
         down_y = -1;
         break;
     };
-    return false;
+    return true;
 }
     
 void SelectionTool::Render(IViewingVolume& vv, IRenderer& r) {
