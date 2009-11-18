@@ -22,8 +22,8 @@ using namespace Renderers;
 Button::Button()
     : x(0)
     , y(0)
-    , width(0)
-    , height(0)
+    , width(50)
+    , height(30)
     , active(false)
     , focus(false) 
 {

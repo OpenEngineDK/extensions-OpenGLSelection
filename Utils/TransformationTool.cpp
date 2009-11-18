@@ -83,6 +83,7 @@ TransformationTool::TransformationTool(TextureLoader& texloader):
     CircularSlider<float>* slider2 = new CircularSlider<float>(0.0, 0.15);
     slider2->SetDimensions(Vector<2,int>(40,40));
     osd_col->AddWidget(slider2);
+    osd_r->AddWidget(osd_col);
 }
 
 TransformationTool::~TransformationTool() {
@@ -95,14 +96,9 @@ bool TransformationTool::Handle(PointingDevice::MovedEventArg arg) {
     if (selection.empty()) return false;
     if (transformation->Transform(arg.state.x, arg.state.y, arg.dx, arg.dy, arg.select, selection, arg.vp))
         return true;
-    if (osd_col->FocusAt(arg.state.x, arg.state.y) == slider) {
-        if (slider->GetValue() < 0.3) 
-            f->SetFontStyle(FONT_STYLE_NORMAL);
-        else if (slider->GetValue() < 0.6)
-            f->SetFontStyle(FONT_STYLE_BOLD);
-        else f->SetFontStyle(FONT_STYLE_ITALIC);
-    }
-    return true;
+    if (osd_col->FocusAt(arg.state.x, arg.state.y)) 
+        return true;
+    return false;
 }
 
 bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
