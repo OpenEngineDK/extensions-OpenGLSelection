@@ -72,18 +72,18 @@ public:
     class _mutator_class: public IListener<ValueChangedEventArg<vtype> >, public Mutator { \
         private:                                                        \
           objtype* obj;                                                 \
+          CircularSlider<vtype>* w;                                     \
         public:                                                         \
-          _mutator_class(objtype* obj): obj(obj) {  }                   \
-          void Handle(ValueChangedEventArg<vtype> e) { obj->setfunc(e.value); } \
-        };                                                              \
-        _mutator_class* m = new _mutator_class(this);                   \
-        CircularSlider<vtype>* w = new CircularSlider<vtype>(init,step); \
-        w->SetText(#fname);                                             \
-        w->SetDimensions(Vector<2,int>(40,40));                         \
-        w->SetValue(this->getfunc());                                   \
-        w->ValueChangedEvent().Attach(*m);                                   
-
-
+        _mutator_class(objtype* obj, CircularSlider<vtype>* w;): obj(obj), w(w) {  } \
+        void Handle(ValueChangedEventArg<vtype> e) { obj->setfunc(e.value); w->SetValue(obj->getfunc())} \
+    };                                                                  \
+    CircularSlider<vtype>* w = new CircularSlider<vtype>(init,step);    \
+    _mutator_class* m = new _mutator_class(this, w);                    \
+    w->SetText(#fname);                                                 \
+    w->SetDimensions(Vector<2,int>(40,40));                             \
+    w->SetValue(this->getfunc());                                       \
+    w->ValueChangedEvent().Attach(*m);                                   
+        
 #define BUTTON_STATE(fname, getfunc, setfunc, objtype)                  \
     {                                                                   \
     class _mutator_class: public IListener<StateChangedEvent>, public Mutator {        \
