@@ -147,14 +147,17 @@ IWidget* Collection::ActivateFocus() {
         }
         else return NULL;
     }
+    IWidget* w = NULL;
     if (mode == SIMPLE || mode == RADIO) {
        for (list<IWidget*>::iterator itr = widgets.begin(); 
              itr != widgets.end();
              itr++) {
-           IWidget* w;
-           if (w = (*itr)->ActivateFocus()) return w;
+           (*itr)->Reset();
+           IWidget* _w;
+           if (_w = (*itr)->ActivateFocus()) w = _w;
         }
     }
+    if (w) return w;
     if (mode == TOGGLE) {
        for (list<IWidget*>::iterator itr = widgets.begin(); 
              itr != widgets.end();
