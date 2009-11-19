@@ -11,7 +11,7 @@
 #include <Widgets/IWidgetRenderer.h>
 #include <Math/Math.h>
 
-#include <Logging/Logger.h>
+// #include <Logging/Logger.h>
 
 namespace OpenEngine {
 namespace Widgets {
@@ -80,7 +80,7 @@ IWidget* CircularSlider::FocusAt(int x, int y) {
             if (atanv1 > atanv2) dangle = -dangle;
             focusVec = v;
             sweep += dangle;
-            SetValue(GetValue() - step * dangle);
+            SetValue(value - step * dangle);
             if (sweep > 360) sweep -= 360;
             if (sweep < -360) sweep += 360;
         }
@@ -129,11 +129,6 @@ T CircularSlider::GetValue() {
 
 void CircularSlider::SetValue(T value) {
     this->value = value;
-    // char s[10];
-    // sprintf(s, "%.1f", value);
-    // if (val_texr) { 
-    //     val_texr->SetText(s);
-    // }
     e.Notify(ValueChangedEventArg<T>(value, this));
 }
 

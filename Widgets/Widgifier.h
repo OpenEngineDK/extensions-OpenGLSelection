@@ -74,15 +74,24 @@ public:
           objtype* obj;                                                 \
           CircularSlider<vtype>* w;                                     \
         public:                                                         \
-        _mutator_class(objtype* obj, CircularSlider<vtype>* w;): obj(obj), w(w) {  } \
-        void Handle(ValueChangedEventArg<vtype> e) { obj->setfunc(e.value); w->SetValue(obj->getfunc())} \
+        _mutator_class(objtype* obj, CircularSlider<vtype>* w)          \
+        : obj(obj)                                                      \
+        , w(w) {                                                        \
+            w->SetValue(obj->getfunc());                                \
+            w->ValueChangedEvent().Attach(*this);                       \
+        }                                                               \
+                                                                        \
+        void Handle(ValueChangedEventArg<vtype> e) {                    \
+            obj->setfunc(e.value);                                      \
+            /*w->ValueChangedEvent().Detach(*this);                     \
+            w->SetValue(obj->getfunc());                                \
+            w->ValueChangedEvent().Attach(*this);   */                  \
+        }                                                               \
     };                                                                  \
     CircularSlider<vtype>* w = new CircularSlider<vtype>(init,step);    \
     _mutator_class* m = new _mutator_class(this, w);                    \
     w->SetText(#fname);                                                 \
     w->SetDimensions(Vector<2,int>(40,40));                             \
-    w->SetValue(this->getfunc());                                       \
-    w->ValueChangedEvent().Attach(*m);                                   
         
 #define BUTTON_STATE(fname, getfunc, setfunc, objtype)                  \
     {                                                                   \
