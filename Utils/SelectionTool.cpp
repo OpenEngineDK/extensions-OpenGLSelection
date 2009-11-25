@@ -55,8 +55,7 @@ bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
     switch (arg.btn) {
     case 1:
         // if we did not receive the down event...
-        if (down_x == -1)
-            return false;
+        if (down_x == -1) return false;
         list<ISceneNode*> selection;
         if (down_x == arg.state.x && down_y == arg.state.y) {
             selection = arg.select.SelectPoint(down_x,
@@ -87,37 +86,49 @@ void SelectionTool::Render(IViewingVolume& vv, IRenderer& r) {
 
 void SelectionTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r) {
     if (down_x != -1) {
-        glPushAttrib(GL_LIGHTING_BIT);
-        glPushAttrib(GL_DEPTH_BUFFER_BIT);
         //draw selection region
         if (x == 0) x = 1;
         if (y == 0) y = 1;
         if (down_x == 0) down_x = 1;
         if (down_y == 0) down_y = 1;
-        glDisable(GL_LIGHTING);
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
+
+        GLfloat linew = 2.0; 
+        GLfloat halflw = linew / 2.0;
+
+        GLfloat x1 = fmin(x, down_x);
+        GLfloat x2 = fmax(x, down_x);
+        GLfloat y1 = fmin(y, down_y);
+        GLfloat y2 = fmax(y, down_y);
+ 
+        x1 += halflw;
+        x2 -= halflw;
+        y1 += halflw;
+        y2 -= halflw;
+
+        // draw filled region
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glLineWidth(2.0);
         glBegin(GL_QUADS);
         glColor4f(0.0, 0.0, 1.0, 0.3);
+        glVertex3f(x1, y1, -1.0);
+        glVertex3f(x2, y1, -1.0);
+        glVertex3f(x2, y2, -1.0);
+        glVertex3f(x1, y2, -1.0);
+        glEnd();
+
+        // draw outline
+        glEnable(GL_LINE_SMOOTH);
+        glLineWidth(linew);
+        glBegin(GL_LINE_STRIP);
+        glColor4f(0.0, 0.0, 1.0, .9);
         glVertex3f(down_x, down_y, -1.0);
         glVertex3f(x, down_y, -1.0);
         glVertex3f(x, y, -1.0);
         glVertex3f(down_x, y, -1.0);
+        glVertex3f(down_x, down_y, -1.0);
         glEnd();
         glDisable(GL_BLEND);
-        glBegin(GL_LINE_STRIP);
-        glColor4f(0.0, 0.0, 1.0, 1.0);
-        glVertex3f(down_x, down_y, -1.0);
-        glVertex3f(x, down_y, -1.0);
-        glVertex3f(x, y, -1.0);
-        glVertex3f(down_x, y, -1.0);
-        glVertex3f(down_x, down_y, -1.0);
-        glEnd();
-        glPopAttrib();
-        glPopAttrib();
+        glDisable(GL_LINE_SMOOTH);
     }
 }
 

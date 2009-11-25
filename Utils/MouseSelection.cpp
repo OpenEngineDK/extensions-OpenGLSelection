@@ -125,6 +125,13 @@ void MouseSelection::Handle(KeyboardEventArg arg) {
 void MouseSelection::Handle(RenderingEventArg arg) {
     // for each viewport
     if (activeViewport != NULL) {
+        glPushAttrib(GL_LIGHTING_BIT);
+        glPushAttrib(GL_ENABLE_BIT);
+        glPushAttrib(GL_DEPTH_BUFFER_BIT);
+        glPushAttrib(GL_COLOR_BUFFER_BIT);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
         // setup projection and view matrix 
         Viewport& viewport = *activeViewport;
         Vector<4,int> d = viewport.GetDimension();
@@ -139,6 +146,11 @@ void MouseSelection::Handle(RenderingEventArg arg) {
         arg.renderer.ApplyViewingVolume(ortho);
         //render each ortho-tool bottom-up.
         vtmap[activeViewport]->RenderOrtho(ortho, arg.renderer);
+
+        glPopAttrib();
+        glPopAttrib();
+        glPopAttrib();
+        glPopAttrib();
     }
 }
 

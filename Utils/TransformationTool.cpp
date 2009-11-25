@@ -179,14 +179,9 @@ void TransformationTool::Handle(SelectionSet<ISceneNode>::ChangedEventArg arg) {
     
 void TransformationTool::Render(IViewingVolume& vv, IRenderer& r) {
     if (selection.empty()) return;
-    glPushAttrib(GL_LIGHTING_BIT);
-    glPushAttrib(GL_DEPTH_BUFFER_BIT);
-    glPushAttrib(GL_ENABLE_BIT);
     glColor4f(0.0,0.0,1.0,0.3);
     glLineWidth(2.0);
-    glDisable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glEnable(GL_LINE_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -210,20 +205,11 @@ void TransformationTool::Render(IViewingVolume& vv, IRenderer& r) {
     glDisable(GL_DEPTH_TEST);
     transformation->RenderWidget(vv, *selection.begin());
     glDisable(GL_BLEND);
-    glPopAttrib();
-    glPopAttrib();
-    glPopAttrib();
 }
     
 void TransformationTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r) {
     if (selection.empty()) return;
-    glPushAttrib(GL_LIGHTING_BIT);
-    glPushAttrib(GL_DEPTH_BUFFER_BIT);
-    glPushAttrib(GL_ENABLE_BIT);
     osd_r->RenderWidgets();
-    glPopAttrib();
-    glPopAttrib();
-    glPopAttrib();
 }
 
 TransformationTool::AxisWidget::Axis::Axis(float rot, 
