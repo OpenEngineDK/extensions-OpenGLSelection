@@ -68,10 +68,10 @@ void WidgetRenderer::RenderQuad(ITextureResourcePtr texr,
                                 float height, 
                                 float* col) 
 {
-    glBindTexture(GL_TEXTURE_2D, texr->GetID());
     glEnable(GL_TEXTURE_2D);
-    glColor4fv(col);
+    glBindTexture(GL_TEXTURE_2D, texr->GetID());
     glBegin(GL_QUADS);
+    glColor4fv(col);
     glTexCoord2f(0.0, 0.0);
     glVertex3f(x, y, -1.0);
     glTexCoord2f(0.0, 1.0);
@@ -103,7 +103,6 @@ void WidgetRenderer::Visit(Button* w) {
 void WidgetRenderer::Visit(Slider* w) {
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim = w->GetDimensions();
-    Vector<4,float> colr(.7,.0,.0,.9);
     
     float val = w->GetValue();
     float knob_width = 10.0f;
@@ -112,7 +111,7 @@ void WidgetRenderer::Visit(Slider* w) {
                              pos[1] + 0.5 * dim[1] - 0.5 * knob_height);
 
     float col[4];
-    colr.ToArray(col);
+    activeColor.ToArray(col);
     //draw slider
     RenderQuad(sliderTex, pos[0], pos[1], dim[0], dim[1], col);
     //draw knob
@@ -231,6 +230,7 @@ void WidgetRenderer::Initializer::Visit(Button* w) {
 }
 
 void WidgetRenderer::Initializer::Visit(Slider* w) {
+    LookupText(w, smallfont);
 }
 
 void WidgetRenderer::Initializer::Visit(CircularSlider<float>* w) {

@@ -34,9 +34,11 @@ class CircularSlider: public ValueWidget<T> {
 private:
     float startAngle, sweep;
     Math::Vector<2,float> center, focusVec;
+    T step;
 public:
     CircularSlider(T value, T step)
-        : ValueWidget<T>(value, step)
+        : ValueWidget<T>(value)
+        , step(step)
     {}
     virtual ~CircularSlider() {}
     

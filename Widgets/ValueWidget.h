@@ -35,12 +35,11 @@ template <class T>
 class ValueWidget: public IWidget {
 protected:
     Event<ValueChangedEventArg<T> > e;
-    T value, step;
+    T value;
 public:
-    ValueWidget(T value, T step)
+    ValueWidget(T value)
         : IWidget()
         , value(value)
-        , step(step)
     {}
     virtual ~ValueWidget() {}
     
