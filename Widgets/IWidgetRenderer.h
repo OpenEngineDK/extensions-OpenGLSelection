@@ -7,8 +7,8 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_WIDGETS_INTERFACE_WIDGET_RENDERER_
-#define _OE_UTILS_WIDGETS_INTERFACE_WIDGET_RENDERER_
+#ifndef _OE_WIDGETS_INTERFACE_WIDGET_RENDERER_
+#define _OE_WIDGETS_INTERFACE_WIDGET_RENDERER_
 
 namespace OpenEngine {
 namespace Widgets {
@@ -37,4 +37,4 @@ public:
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_WIDGETS_RENDERER_
+#endif //_OE_WIDGETS_RENDERER_

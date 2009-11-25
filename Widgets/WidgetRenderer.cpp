@@ -10,13 +10,12 @@
 #include <Widgets/WidgetRenderer.h>
 #include <Widgets/Button.h>
 #include <Widgets/Slider.h>
+#include <Widgets/CircularSlider.h>
 #include <Widgets/Collection.h>
 
 #include <Resources/ResourceManager.h>
 #include <Renderers/TextureLoader.h>
-#include <Widgets/IWidgetRenderer.h>
 #include <Meta/OpenGL.h>
-#include <Math/Vector.h>
 
 #include <list>
 
@@ -30,8 +29,9 @@ using namespace Renderers;
 
 WidgetRenderer::WidgetRenderer(TextureLoader& texloader)
     : initializer(texloader, text_map, val_map)
-    , activeColor(Vector<4,float>(.2,.2,.5, 1.0))//Vector<4,float>(0.9, .2, 0.2, 1.0f))
+    , activeColor(Vector<4,float>(.2,.2,.5, 1.0))
     , inactiveColor(Vector<4,float>(0.2, 0.2, 0.5, 0.5))
+    , coll_depth(-1)
 {
     sliderTex = ResourceManager<ITextureResource>::Create("slider_bg.png");
     texloader.Load(sliderTex);
@@ -44,12 +44,51 @@ void WidgetRenderer::AddWidget(IWidget* w) {
     w->Accept(initializer);
 }
 
+void WidgetRenderer::RenderWidgets() {
+    glPushAttrib(GL_ENABLE_BIT);
+    glPushAttrib(GL_DEPTH_BUFFER_BIT);
+    glPushAttrib(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    for (list<IWidget*>::iterator itr = widgets.begin();
+         itr != widgets.end();
+         ++itr) {
+        (*itr)->Accept(*this);
+    }
+    glPopAttrib();
+    glPopAttrib();
+    glPopAttrib();
+}
+
+void WidgetRenderer::RenderQuad(ITextureResourcePtr texr, 
+                                float x, 
+                                float y, 
+                                float width, 
+                                float height, 
+                                float* col) 
+{
+    glBindTexture(GL_TEXTURE_2D, texr->GetID());
+    glEnable(GL_TEXTURE_2D);
+    glColor4fv(col);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 0.0);
+    glVertex3f(x, y, -1.0);
+    glTexCoord2f(0.0, 1.0);
+    glVertex3f(x, y + height, -1.0);
+    glTexCoord2f(1.0, 1.0);
+    glVertex3f(x + width, y + height, -1.0);
+    glTexCoord2f(1.0, 0.0);
+    glVertex3f(x + width, y, -1.0);
+    glEnd();    
+    glDisable(GL_TEXTURE_2D);
+}
+
 void WidgetRenderer::Visit(Button* w) {
     ITextureResourcePtr text = text_map[w];
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim(text->GetWidth(), text->GetHeight());
     float col[4];
-    
     if (w->GetActive()) {
         pos = pos + Vector<2,int>(1,1);
         activeColor.ToArray(col); 
@@ -58,33 +97,10 @@ void WidgetRenderer::Visit(Button* w) {
         inactiveColor.ToArray(col);
         pos = pos - Vector<2,int>(1,1);
     }
-    if (w->GetFocus()) {
-    }
-    else {}
-
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4fv(col);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, text->GetID());
-    CHECK_FOR_GL_ERROR();
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(pos[0], pos[1], -1.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(pos[0], pos[1] + dim[1], -1.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(pos[0] + dim[0], pos[1], -1.0);
-    glEnd();    
+    RenderQuad(text, pos[0], pos[1], dim[0], dim[1], col);
 }
 
 void WidgetRenderer::Visit(Slider* w) {
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, sliderTex->GetID());
-
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim = w->GetDimensions();
     Vector<4,float> colr(.7,.0,.0,.9);
@@ -94,223 +110,101 @@ void WidgetRenderer::Visit(Slider* w) {
     float knob_height = dim[1] + 10.0f; 
     Vector<2,float> knob_pos(pos[0] + dim[0] * val - (0.5 * knob_width),
                              pos[1] + 0.5 * dim[1] - 0.5 * knob_height);
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(colr[0], colr[1], colr[2], colr[3]);
+
+    float col[4];
+    colr.ToArray(col);
     //draw slider
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(pos[0], pos[1], -1.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(pos[0], pos[1] + dim[1], -1.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(pos[0] + dim[0], pos[1], -1.0);
+    RenderQuad(sliderTex, pos[0], pos[1], dim[0], dim[1], col);
     //draw knob
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(knob_pos[0], knob_pos[1], -1.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(knob_pos[0], knob_pos[1] + knob_height, -1.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(knob_pos[0] + knob_width, knob_pos[1] + knob_height, -1.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(knob_pos[0] + knob_width, knob_pos[1], -1.0);
-    glEnd();    
+    RenderQuad(sliderTex, knob_pos[0], knob_pos[1], knob_width, knob_height, col);
+}
+
+void WidgetRenderer::RenderCircularSlider(IWidget* w, float angle, float sweep) {
+    ITextureResourcePtr text = text_map[w]; 
+    IFontTextureResourcePtr val  = val_map[w];
+    Vector<2,int> pos = w->GetPosition();
+    Vector<2,int> dim = w->GetDimensions();
+    pos += Vector<2,int>(0.5 * dim[0], 0.5 * dim[1]);
+    float col[4];
+    activeColor.ToArray(col);
+    Vector<2,int> dim_tex = Vector<2,int>(val->GetWidth(),
+                                          val->GetHeight());
+    Vector<2,int> pos_tex = pos - Vector<2,int>(0.5 * dim_tex[0], 0.5 * dim_tex[1]);
+    //draw value
+    RenderQuad(val, pos_tex[0], pos_tex[1], dim_tex[0], dim_tex[1], col);
+    GLUquadric* q = gluNewQuadric();
+    if (w->GetFocus()) {
+        glPushMatrix();
+        glTranslatef(pos[0], pos[1], -1);
+        glColor4f(0.0, 0.0, 1.0, 0.1);
+        gluDisk(q, 0.5*dim[0]*0.8, 0.5*dim[0], 20, 1);
+        glPopMatrix();
+    }
+    if (w->GetActive()) {
+        glPushMatrix();
+        glTranslatef(pos[0], pos[1], -1);
+        // glColor4f(0.2, 0.2, 1.0, .9);
+        glColor4f(inactiveColor[0], inactiveColor[1], inactiveColor[2], inactiveColor[3]);
+        gluPartialDisk(q, 0.5 * dim[0] * 0.8, 
+                       0.5 * dim[0], 
+                       20, 
+                       1, 
+                       90 + angle, 
+                       sweep);
+        glPopMatrix();
+    }
+    if (w->GetFocus()) {
+        //draw text
+        pos_tex[0] = w->GetPosition()[0] + 0.5*w->GetDimensions()[0] - 0.5*text->GetWidth();
+        pos_tex[1] = w->GetPosition()[1] + 0.9*w->GetDimensions()[1] - 0.5*text->GetHeight();
+        col[3] = 0.6;
+        RenderQuad(text, pos_tex[0], pos_tex[1], text->GetWidth(), text->GetHeight(), col);
+    }
+    gluDeleteQuadric(q);
 }
 
 void WidgetRenderer::Visit(CircularSlider<float>* w) {
-    ITextureResourcePtr text = text_map[w]; 
-    IFontTextureResourcePtr val  = val_map[w];
-    Vector<2,int> pos = w->GetPosition();
-    Vector<2,int> dim = w->GetDimensions();
-    pos += Vector<2,int>(0.5 * dim[0], 0.5 * dim[1]);
-    float colr[4];
-    activeColor.ToArray(colr);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    Vector<2,int> dim_tex = Vector<2,int>(val->GetWidth(),
-                                          val->GetHeight());
-    Vector<2,int> pos_tex = pos - Vector<2,int>(0.5 * dim_tex[0], 0.5 * dim_tex[1]);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, val->GetID());
-    CHECK_FOR_GL_ERROR();
-    //draw value
-    glColor4f(colr[0], colr[1],colr[2],colr[3]);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(pos_tex[0], pos_tex[1], -1.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(pos_tex[0], pos_tex[1] + dim_tex[1], -1.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(pos_tex[0] + dim_tex[0], pos_tex[1] + dim_tex[1], -1.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(pos_tex[0] + dim_tex[0], pos_tex[1], -1.0);
-    glEnd();
-
-    glDisable(GL_TEXTURE_2D);
-    GLUquadric* q = gluNewQuadric();
-    if (w->GetFocus()) {
-        glPushMatrix();
-        glTranslatef(pos[0], pos[1], -1);
-        glColor4f(0.0, 0.0, 1.0, 0.1);
-        gluDisk(q, 0.5*dim[0]*0.8, 0.5*dim[0], 20, 1);
-        glPopMatrix();
-    }
-    if (w->GetActive()) {
-        glPushMatrix();
-        glTranslatef(pos[0], pos[1], -1);
-        // glColor4f(0.2, 0.2, 1.0, .9);
-        glColor4f(inactiveColor[0], inactiveColor[1], inactiveColor[2], inactiveColor[3]);
-        gluPartialDisk(q, 0.5 * dim[0] * 0.8, 
-                       0.5 * dim[0], 
-                       20, 
-                       1, 
-                       90 + w->GetStartAngle(), 
-                       w->GetSweep());
-        glPopMatrix();
-    }
-    if (w->GetFocus()) {
-        glBindTexture(GL_TEXTURE_2D, text->GetID());
-        glEnable(GL_TEXTURE_2D);
-        CHECK_FOR_GL_ERROR();
-    
-        //draw value
-        pos_tex[0] = w->GetPosition()[0] + 0.5*w->GetDimensions()[0] - 0.5*text->GetWidth();
-        pos_tex[1] = w->GetPosition()[1] + 0.9*w->GetDimensions()[1] - 0.5*text->GetHeight();
-        colr[3] = 0.6;
-        glColor4fv(colr);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0, 0.0);
-        glVertex3f(pos_tex[0], pos_tex[1], -1.0);
-        glTexCoord2f(0.0, 1.0);
-        glVertex3f(pos_tex[0], pos_tex[1] + text->GetHeight(), -1.0);
-        glTexCoord2f(1.0, 1.0);
-        glVertex3f(pos_tex[0] + text->GetWidth(), 
-                   pos_tex[1] + text->GetHeight(), -1.0);
-        glTexCoord2f(1.0, 0.0);
-        glVertex3f(pos_tex[0] + text->GetWidth(), pos_tex[1], -1.0);
-        glEnd();
-    }
-    gluDeleteQuadric(q);
-
+    RenderCircularSlider(w, w->GetStartAngle(), w->GetSweep());
 }
 
 void WidgetRenderer::Visit(CircularSlider<int>* w) {
-    ITextureResourcePtr text = text_map[w]; 
-    IFontTextureResourcePtr val  = val_map[w];
-    Vector<2,int> pos = w->GetPosition();
-    Vector<2,int> dim = w->GetDimensions();
-    pos += Vector<2,int>(0.5 * dim[0], 0.5 * dim[1]);
-    float colr[4];
-    activeColor.ToArray(colr);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    Vector<2,int> dim_tex = Vector<2,int>(val->GetWidth(),
-                                          val->GetHeight());
-    Vector<2,int> pos_tex = pos - Vector<2,int>(0.5 * dim_tex[0], 0.5 * dim_tex[1]);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, val->GetID());
-    CHECK_FOR_GL_ERROR();
-    //draw value
-    glColor4f(colr[0], colr[1],colr[2],colr[3]);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(pos_tex[0], pos_tex[1], -1.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(pos_tex[0], pos_tex[1] + dim_tex[1], -1.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(pos_tex[0] + dim_tex[0], pos_tex[1] + dim_tex[1], -1.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(pos_tex[0] + dim_tex[0], pos_tex[1], -1.0);
-    glEnd();
-
-    glDisable(GL_TEXTURE_2D);
-    GLUquadric* q = gluNewQuadric();
-    if (w->GetFocus()) {
-        glPushMatrix();
-        glTranslatef(pos[0], pos[1], -1);
-        glColor4f(0.0, 0.0, 1.0, 0.1);
-        gluDisk(q, 0.5*dim[0]*0.8, 0.5*dim[0], 20, 1);
-        glPopMatrix();
-    }
-    if (w->GetActive()) {
-        glPushMatrix();
-        glTranslatef(pos[0], pos[1], -1);
-        // glColor4f(0.2, 0.2, 1.0, .9);
-        glColor4f(inactiveColor[0], inactiveColor[1], inactiveColor[2], inactiveColor[3]);
-        gluPartialDisk(q, 0.5 * dim[0] * 0.8, 
-                       0.5 * dim[0], 
-                       20, 
-                       1, 
-                       90 + w->GetStartAngle(), 
-                       w->GetSweep());
-        glPopMatrix();
-    }
-    if (w->GetFocus()) {
-        glBindTexture(GL_TEXTURE_2D, text->GetID());
-        glEnable(GL_TEXTURE_2D);
-        CHECK_FOR_GL_ERROR();
-    
-        //draw value
-        pos_tex[0] = w->GetPosition()[0] + 0.5*w->GetDimensions()[0] - 0.5*text->GetWidth();
-        pos_tex[1] = w->GetPosition()[1] + 0.9*w->GetDimensions()[1] - 0.5*text->GetHeight();
-        colr[3] = 0.6;
-        glColor4fv(colr);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0, 0.0);
-        glVertex3f(pos_tex[0], pos_tex[1], -1.0);
-        glTexCoord2f(0.0, 1.0);
-        glVertex3f(pos_tex[0], pos_tex[1] + text->GetHeight(), -1.0);
-        glTexCoord2f(1.0, 1.0);
-        glVertex3f(pos_tex[0] + text->GetWidth(), 
-                   pos_tex[1] + text->GetHeight(), -1.0);
-        glTexCoord2f(1.0, 0.0);
-        glVertex3f(pos_tex[0] + text->GetWidth(), pos_tex[1], -1.0);
-        glEnd();
-    }
-    gluDeleteQuadric(q);
-
+    RenderCircularSlider(w, w->GetStartAngle(), w->GetSweep());
 }
 
 void WidgetRenderer::Visit(Collection* w) {
-    //draw bg
-    int pad = 10;
-    Vector<2,int> pos = w->GetPosition();
-    pos = Vector<2,int>(pos[0]-pad, pos[1]-pad); //padding
-    Vector<2,int> dim = w->GetDimensions();
-    dim = Vector<2,int>(dim[0]+2*pad, dim[1]+2*pad); 
-    glDisable(GL_TEXTURE_2D);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glBegin(GL_QUADS);
-    glColor4f(0.7,0.7,.9,0.9);
-    glVertex3f(pos[0], pos[1], -1.0);
-    glVertex3f(pos[0], pos[1] + dim[1], -1.0);
-    glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
-    glVertex3f(pos[0] + dim[0], pos[1], -1.0);
-    glEnd();
-    // border
-    glLineWidth(4.0);
-    glEnable(GL_BLEND);
-    glBegin(GL_LINE_STRIP);
-    // glColor4f(0.3, 0.3, 1.0, 0.8);
-    glColor4f(activeColor[0], activeColor[1], activeColor[2], activeColor[3]);
-    glVertex3f(pos[0], pos[1], -1.0);
-    glVertex3f(pos[0], pos[1] + dim[1], -1.0);
-    glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
-    glVertex3f(pos[0] + dim[0], pos[1], -1.0);
-    glVertex3f(pos[0], pos[1], -1.0);
-    glEnd();
+    if (++coll_depth == 0) {
+        //draw bg
+        int pad = 10;
+        Vector<2,int> pos = w->GetPosition();
+        pos = Vector<2,int>(pos[0]-pad, pos[1]-pad); //padding
+        Vector<2,int> dim = w->GetDimensions();
+        dim = Vector<2,int>(dim[0]+2*pad, dim[1]+2*pad); 
+        glDisable(GL_TEXTURE_2D);
+        glBegin(GL_QUADS);
+        glColor4f(0.7,0.7,.9,0.9);
+        glVertex3f(pos[0], pos[1], -1.0);
+        glVertex3f(pos[0], pos[1] + dim[1], -1.0);
+        glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
+        glVertex3f(pos[0] + dim[0], pos[1], -1.0);
+        glEnd();
+        // border
+        glLineWidth(2.0);
+        glBegin(GL_LINE_STRIP);
+        glColor4f(activeColor[0], activeColor[1], activeColor[2], activeColor[3]);
+        glVertex3f(pos[0], pos[1], -1.0);
+        glVertex3f(pos[0], pos[1] + dim[1], -1.0);
+        glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
+        glVertex3f(pos[0] + dim[0], pos[1], -1.0);
+        glVertex3f(pos[0], pos[1], -1.0);
+        glEnd();
+    }
     list<IWidget*> widgets = w->GetWidgets();
     for (list<IWidget*>::iterator i = widgets.begin();
          i != widgets.end();
          i++) {
         (*i)->Accept(*this);
     }
+    --coll_depth;
 }
 
 

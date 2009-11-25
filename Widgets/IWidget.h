@@ -19,6 +19,7 @@ namespace OpenEngine {
 namespace Widgets {
 
 using Core::Event;
+using Math::Vector;
 using std::string;
 
 class IWidgetRenderer;
@@ -61,9 +62,12 @@ public:
  */
 class IWidget {
 protected:
+    int x, y, width, height;
+    bool active, focus;
     string text;
     Event<TextChangedEventArg> textEvent;
 public:
+    IWidget() : x(0), y(0), width(0), height(0), active(false), focus(false) {};
     /**
      * Empty destructor.
      */
@@ -73,22 +77,22 @@ public:
      * Get the position of the widget.
      * @return the x and y coordinates of the widget.
      */
-    virtual Math::Vector<2,int> GetPosition() = 0;
+    virtual Math::Vector<2,int> GetPosition() { return Vector<2,int>(x, y); };
     /**
      * Get the dimensions of the widget.
      * @return the width and height of the widget.
      */
-    virtual Math::Vector<2,int> GetDimensions() = 0;
+    virtual Math::Vector<2,int> GetDimensions() { return Vector<2,int>(width, height); };
     /**
      * Set the position of the widget.
      * @param pos the x and y coordinates of the widget.
      */
-    virtual void SetPosition(Math::Vector<2,int> pos) = 0;
+    virtual void SetPosition(Math::Vector<2,int> pos) { x = pos[0]; y = pos[1]; };
     /**
      * Set the dimensions of the widget.
      * @param dim the width and height of the widget.
      */
-    virtual void SetDimensions(Math::Vector<2,int> dim) = 0;
+    virtual void SetDimensions(Math::Vector<2,int> dim) { width = dim[0]; height = dim[1]; };
  
     /**
      * The rendering (visitor callback) method.  Every widget should
@@ -161,32 +165,35 @@ public:
      * 
      * @param active the active state.
      */
-    virtual void SetActive(bool active) = 0;
+    virtual void SetActive(bool active) { this->active = active; };
 
     /**
      * Get the active state of the widget.
      * 
      * @return the active state.
      */
-    virtual bool GetActive() = 0;
+    virtual bool GetActive() { return active; };
 
     /**
      * Change the focus state of the widget.
      * 
      * @param focus the focus state.
      */
-    virtual void SetFocus(bool focus) = 0;
+    virtual void SetFocus(bool focus) { this->focus = focus; };
 
     /**
      * Get the focus state of the widget.
      * 
      * @return the focus state.
      */
-    virtual bool GetFocus() = 0;
+    virtual bool GetFocus() { return focus; }
 
     virtual string GetText() { return text; }
     
-    virtual void SetText(string text) { this->text = text; textEvent.Notify(TextChangedEventArg(text, this)); };
+    virtual void SetText(string text) { 
+        this->text = text; 
+        textEvent.Notify(TextChangedEventArg(text, this)); 
+    };
     
     Event<TextChangedEventArg>& TextChangedEvent() { return textEvent; }
 };

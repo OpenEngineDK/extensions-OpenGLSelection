@@ -11,6 +11,7 @@
 #define _OE_WIDGETS_WIDGET_RENDERER_
 
 #include <Widgets/IWidget.h>
+#include <Widgets/ValueWidget.h>
 #include <Widgets/IWidgetRenderer.h>
 #include <Resources/ITextureResource.h>
 #include <Resources/IFontTextureResource.h>
@@ -20,11 +21,8 @@
 #include <map>
 #include <list>
 
-#include <Widgets/CircularSlider.h>
-
 namespace OpenEngine {
     namespace Renderers {
-        // class IWidgetRenderer;
         class TextureLoader;
     }
 namespace Widgets {
@@ -40,7 +38,8 @@ using std::list;
 class Button;
 class Slider;
 class Collection;
-
+template <class T>
+class CircularSlider;
 /**
  * On Screen Display OpenGL Renderer Class.
  *
@@ -48,7 +47,11 @@ class Collection;
  */
 class WidgetRenderer: public IWidgetRenderer {
 private:
-    class Initializer: public IWidgetRenderer, IListener<TextChangedEventArg>, IListener<ValueChangedEventArg<float> >, IListener<ValueChangedEventArg<int> > {
+    class Initializer
+        : public IWidgetRenderer
+        , IListener<TextChangedEventArg>
+        , IListener<ValueChangedEventArg<float> >
+        , IListener<ValueChangedEventArg<int> > {
     private:
         TextureLoader& texloader;
         IFontResourcePtr largefont;
@@ -74,10 +77,11 @@ private:
     //maps to hold widget font textures
     map<IWidget*, IFontTextureResourcePtr> text_map;
     map<IWidget*, IFontTextureResourcePtr> val_map;
-
     ITextureResourcePtr sliderTex;
     Math::Vector<4,float> activeColor, inactiveColor;
-
+    int coll_depth;
+    inline void RenderQuad(ITextureResourcePtr texr, float x, float y, float width, float height, float* col);
+    void RenderCircularSlider(IWidget* w, float angle, float sweep);
 public:
     WidgetRenderer(Renderers::TextureLoader& texloader);
     virtual ~WidgetRenderer();
@@ -92,6 +96,6 @@ public:
     void AddWidget(IWidget* w);
 };
 
-} // NS Utils
+} // NS Widgets
 } // NS OpenEngine
 #endif //_OE_UTILS_WIDGETS_RENDERER_

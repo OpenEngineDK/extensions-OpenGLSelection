@@ -26,6 +26,7 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Widgets/Slider.h
   Widgets/Slider.cpp
   Widgets/CircularSlider.h
+  Widgets/ValueWidget.h
 #  Widgets/CircularSlider.cpp
   Widgets/WidgetRenderer.h
   Widgets/WidgetRenderer.cpp

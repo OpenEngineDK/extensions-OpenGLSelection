@@ -7,8 +7,8 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_WIDGETS_COLLECTION_
-#define _OE_UTILS_WIDGETS_COLLECTION_
+#ifndef _OE_WIDGETS_COLLECTION_
+#define _OE_WIDGETS_COLLECTION_
 
 #include <Widgets/IWidget.h>
 #include <list>
@@ -16,7 +16,6 @@
 namespace OpenEngine {
 namespace Widgets {
 
-enum ResetMode {SIMPLE, RADIO, TOGGLE};
 /**
  * On Screen Display - Collection of Widgets.  
  *
@@ -26,28 +25,21 @@ enum ResetMode {SIMPLE, RADIO, TOGGLE};
  * @class Collection Collection.h OpenGLSelection/Utils/Collection.h
  */
 class Collection: public IWidget {
+public:
+enum Mode {SIMPLE, RADIO, TOGGLE};
 private:
-    ResetMode mode;
+    Mode mode;
     std::list<IWidget*> widgets;
-    int x, y, dx, dy, width, height;
+    int dx, dy;
     IWidget *focusWidget;
-    bool active, focus;
+    void UpdateWidgets();
 public:
     Collection(): mode(SIMPLE) {}
-    Collection(ResetMode mode);
+    Collection(Mode mode);
     virtual ~Collection();
-    
-    void UpdateWidgets();
     // IWidget
-    Math::Vector<2,int> GetPosition();
-    Math::Vector<2,int> GetDimensions();
     void SetPosition(Math::Vector<2,int> pos);
-    void SetDimensions(Math::Vector<2,int> dim);
     void Accept(IWidgetRenderer& r);
-    bool GetActive();
-    void SetActive(bool active);
-    bool GetFocus();
-    void SetFocus(bool focus);
     IWidget* WidgetAt(int x, int y);
     IWidget* FocusAt(int x, int y);
     IWidget* ActivateAt(int x, int y);

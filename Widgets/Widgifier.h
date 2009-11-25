@@ -47,7 +47,6 @@ public:
     }
 };
 
-
 #define WIDGET_INIT()                                       \
   private:                                                  \
     Collection _coll;                                       \
@@ -83,32 +82,29 @@ public:
                                                                         \
         void Handle(ValueChangedEventArg<vtype> e) {                    \
             obj->setfunc(e.value);                                      \
-            /*w->ValueChangedEvent().Detach(*this);                     \
-            w->SetValue(obj->getfunc());                                \
-            w->ValueChangedEvent().Attach(*this);   */                  \
-        }                                                               \
+    }                                                                   \
     };                                                                  \
     CircularSlider<vtype>* w = new CircularSlider<vtype>(init,step);    \
-    _mutator_class* m = new _mutator_class(this, w);                    \
     w->SetText(#fname);                                                 \
     w->SetDimensions(Vector<2,int>(40,40));                             \
+    _mutator_class* m = new _mutator_class(this, w);                    \
         
 #define BUTTON_STATE(fname, getfunc, setfunc, objtype)                  \
     {                                                                   \
-    class _mutator_class: public IListener<StateChangedEvent>, public Mutator {        \
+    class _mutator_class: public IListener<StateChangedEventArg>, public Mutator {  \
         private:                                                        \
           objtype* obj;                                                 \
         public:                                                         \
           _mutator_class(objtype* obj): obj(obj) {  }                   \
-          void Handle(StateChangedEvent e) { obj->setfunc(e.state); }   \
+          void Handle(StateChangedEventArg e) { obj->setfunc(e.state); } \
         };                                                              \
         _mutator_class* m = new _mutator_class(this);                   \
-        Collection* w = new Collection(TOGGLE);                         \
+        Collection* w = new Collection(Collection::TOGGLE);             \
         Button* c = new Button();                                       \
         c->SetActive(this->getfunc());                                  \
         c->SetText(#fname);                                             \
         c->SetDimensions(Vector<2,int>(40,40));                         \
-        c->ChangedEvent().Attach(*m);                                   \
+        c->StateChangedEvent().Attach(*m);                              \
         w->AddWidget(c);                                               
 
 } // NS Utils

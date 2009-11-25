@@ -20,35 +20,12 @@ using namespace Resources;
 using namespace Renderers;
 
 Button::Button()
-    : x(0)
-    , y(0)
-    , width(50)
-    , height(30)
-    , active(false)
-    , focus(false) 
+    : IWidget()
 {
 }
 
 Button::~Button() {}
     
-Vector<2,int> Button::GetPosition() {
-    return Vector<2,int>(x, y);
-}
-
-Vector<2,int> Button::GetDimensions() {
-    return Vector<2,int>(width, height);
-}
-
-void Button::SetPosition(Vector<2,int> pos) {
-    x = pos[0];
-    y = pos[1];
-}
-
-void Button::SetDimensions(Vector<2,int> dim) {
-    width = dim[0];
-    height = dim[1];
-}
-
 void Button::Accept(IWidgetRenderer& r) {
     r.Visit(this);
 }
@@ -59,23 +36,10 @@ IWidget* Button::WidgetAt(int x, int y) {
     return NULL;
 }
 
-bool Button::GetActive() {
-    return active;
-}
-
 void Button::SetActive(bool active) {
     this->active = active;
-    e.Notify(StateChangedEvent(active));
+    e.Notify(StateChangedEventArg(active));
 }
-
-bool Button::GetFocus() {
-    return focus;
-}
-
-void Button::SetFocus(bool focus) {
-    this->focus = focus;
-}
-
 IWidget* Button::FocusAt(int x, int y) {
     if (WidgetAt(x,y)) {
         SetFocus(true);

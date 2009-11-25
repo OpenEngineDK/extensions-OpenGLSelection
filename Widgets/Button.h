@@ -7,8 +7,8 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-#ifndef _OE_UTILS_WIDGETS_BUTTON_
-#define _OE_UTILS_WIDGETS_BUTTON_
+#ifndef _OE_WIDGETS_BUTTON_
+#define _OE_WIDGETS_BUTTON_
 
 #include <Widgets/IWidget.h>
 #include <Core/Event.h>
@@ -26,10 +26,10 @@ using Core::Event;
 
 class WidgetRenderer;
 
-class StateChangedEvent{
+class StateChangedEventArg {
 public:
     bool state;
-    StateChangedEvent(bool state): state(state) {}
+    StateChangedEventArg (bool state): state(state) {}
 };
 
 /**
@@ -42,32 +42,20 @@ public:
  */
 class Button: public IWidget {
 private:
-    Resources::IFontTextureResourcePtr texr;
-    Math::Vector<4,float> colr, activeColr;
-    int x, y, width, height;
-    bool active, focus;
-    Event<StateChangedEvent> e;
-    string caption;
+    Event<StateChangedEventArg> e;
 public:
-    Event<StateChangedEvent>& ChangedEvent() { return e; }
-
     Button();
     virtual ~Button();
     
-    Math::Vector<2,int> GetPosition();
-    Math::Vector<2,int> GetDimensions();
-    void SetPosition(Math::Vector<2,int> pos);
-    void SetDimensions(Math::Vector<2,int> dim);
-    void Accept(IWidgetRenderer& r);
-    bool GetActive();
     void SetActive(bool active);
-    bool GetFocus();
-    void SetFocus(bool focus);
+    void Accept(IWidgetRenderer& r);
     IWidget* WidgetAt(int x, int y);
     IWidget* FocusAt(int x, int y);
     IWidget* ActivateAt(int x, int y);
     IWidget* ActivateFocus();
     void Reset();
+    Event<StateChangedEventArg>& StateChangedEvent() { return e; }
+
 };
 
 } // NS Utils

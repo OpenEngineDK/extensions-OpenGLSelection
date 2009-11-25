@@ -57,10 +57,10 @@ TransformationTool::TransformationTool(TextureLoader& texloader):
 
     osd_r = new WidgetRenderer(texloader);
 
-    osd_col = new Collection(SIMPLE);
+    osd_col = new Collection(Collection::SIMPLE);
     osd_col->SetPosition(Vector<2,int>(20, 20));
 
-    osd_rad = new Collection(RADIO);
+    osd_rad = new Collection(Collection::RADIO);
 
     traBtn = new Button();
     osd_rad->AddWidget(traBtn);

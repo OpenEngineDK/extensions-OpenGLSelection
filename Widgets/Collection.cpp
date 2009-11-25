@@ -10,6 +10,7 @@
 #include <Widgets/Collection.h>
 #include <Widgets/IWidgetRenderer.h>
 
+#include <Core/Exceptions.h>
 #include <Logging/Logger.h>
 
 namespace OpenEngine {
@@ -17,16 +18,12 @@ namespace Widgets {
 
 using namespace Math;
 using namespace std;
+using namespace Core;
 
-Collection::Collection(ResetMode mode)
-    : mode(mode)
-    , x(0) 
-    , y(0) 
-    , width(0) 
-    , height(0)
+Collection::Collection(Mode mode)
+    : IWidget()
+    , mode(mode)
     , focusWidget(NULL)
-    , active(false)
-    , focus(false)
 {}
 
 Collection::~Collection() {
@@ -37,23 +34,10 @@ Collection::~Collection() {
     }
 }
     
-Vector<2,int> Collection::GetPosition() {
-    return Vector<2,int>(x, y);
-}
-
-Vector<2,int> Collection::GetDimensions() {
-    return Vector<2,int>(width, height);
-}
-
 void Collection::SetPosition(Vector<2,int> pos) {
     x = pos[0];
     y = pos[1];
     UpdateWidgets();
-}
-
-void Collection::SetDimensions(Vector<2,int> dim) {
-    width = dim[0];
-    height = dim[1];
 }
 
 void Collection::Accept(IWidgetRenderer& r) {
@@ -66,29 +50,11 @@ IWidget* Collection::WidgetAt(int x, int y) {
              itr != widgets.end();
              itr++) {
             IWidget* w = (*itr)->WidgetAt(x,y);
-            if (w) {
-                return w;
-            }
+            if (w) return w;
         }
         return this;
     }
     return NULL;
-}
-
-bool Collection::GetActive() {
-    return active;
-}
-
-void Collection::SetActive(bool active) {
-    this->active = active;
-}
-
-bool Collection::GetFocus() {
-    return focus;
-}
-
-void Collection::SetFocus(bool focus) {
-    this->focus = focus;
 }
 
 void Collection::AddWidget(IWidget* w) {
@@ -128,15 +94,7 @@ IWidget* Collection::FocusAt(int x, int y) {
 }
 
 IWidget* Collection::ActivateAt(int x, int y) {
-    IWidget* w = NULL;
-    if (mode == SIMPLE || focusWidget) {
-        for (list<IWidget*>::iterator itr = widgets.begin(); 
-             itr != widgets.end();
-             itr++) {
-            w = (*itr)->ActivateAt(x,y);
-        }
-    }
-    return w;
+    throw new Exception("Not implemented");
 }
 
 IWidget* Collection::ActivateFocus() {
@@ -155,7 +113,7 @@ IWidget* Collection::ActivateFocus() {
            (*itr)->Reset();
            IWidget* _w;
            if (_w = (*itr)->ActivateFocus()) w = _w;
-        }
+       }
     }
     if (w) return w;
     if (mode == TOGGLE) {

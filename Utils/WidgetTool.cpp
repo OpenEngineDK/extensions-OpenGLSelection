@@ -78,14 +78,11 @@ void WidgetTool::Render(IViewingVolume& vv, IRenderer& r) {
 }
     
 void WidgetTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r) {
-    for (list<IWidget*>::reverse_iterator itr = widgets.rbegin();
-         itr != widgets.rend();
-         ++itr) { 
-        (*itr)->Accept(*wr);
-    }
+    wr->RenderWidgets();
 }
 
 void WidgetTool::AddWidget(IWidget* w) {
+    w->SetPosition(Vector<2,int>(20,20));
     wr->AddWidget(w);
     widgets.push_back(w);
 }
