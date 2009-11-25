@@ -44,7 +44,6 @@ namespace OpenEngine {
         class WidgetRenderer;
         class Collection;
         class Button;
-        class Slider;
 
     }
 namespace Utils {
@@ -53,7 +52,6 @@ class ISceneSelection;
 using Widgets::WidgetRenderer;
 using Widgets::Collection;
 using Widgets::Button;
-using Widgets::Slider;
 
 /**
  * Transformation Tool
@@ -248,15 +246,10 @@ private:
     ITransformationStrategy* transformation;
     Scene::SearchTool search;
     WidgetRenderer* osd_r;
-    Collection *osd_col, *osd_rad;
+    Collection *osd_rad;
     Button *traBtn, *rotBtn, *sclBtn;
-    Slider *slider;
     inline void ApplyTransformationNode(Scene::TransformationNode* node);
 public:
-    Resources::IFontTextureResourcePtr ft;
-    Resources::IFontTextureResourcePtr ft2;
-    Resources::IFontTextureResourcePtr ft3;
-    Resources::IFontResourcePtr f;
     TransformationTool(Renderers::TextureLoader& texloader);
     ~TransformationTool();
     bool Handle(PointingDevice::MovedEventArg arg);

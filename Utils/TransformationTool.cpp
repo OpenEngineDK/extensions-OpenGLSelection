@@ -53,50 +53,35 @@ using namespace std;
 TransformationTool::TransformationTool(TextureLoader& texloader): 
       transformation(&translate)
 {
-    ResourceManager<IFontResource>::AddPlugin(new SDLFontPlugin());
-
     osd_r = new WidgetRenderer(texloader);
-
-    osd_col = new Collection(Collection::SIMPLE);
-    osd_col->SetPosition(Vector<2,int>(20, 20));
-
     osd_rad = new Collection(Collection::RADIO);
-
+    osd_rad->SetPosition(Vector<2,int>(20,20));
     traBtn = new Button();
     osd_rad->AddWidget(traBtn);
     traBtn->SetText("Translate");
+    traBtn->SetDimensions(Vector<2,int>(100,25));
     traBtn->SetActive(true);
     rotBtn = new Button();
     rotBtn->SetText("Rotate");
+    rotBtn->SetDimensions(Vector<2,int>(100,25));
     osd_rad->AddWidget(rotBtn);
-
     sclBtn = new Button();
     sclBtn->SetText("Scale");
+    sclBtn->SetDimensions(Vector<2,int>(100,25));
     osd_rad->AddWidget(sclBtn);
-    
-    osd_col->AddWidget(osd_rad);
-
-    slider = new Slider();
-    slider->SetDimensions(Vector<2,int>(140,10));
-    osd_col->AddWidget(slider);
-
-    CircularSlider<float>* slider2 = new CircularSlider<float>(0.0, 0.15);
-    slider2->SetDimensions(Vector<2,int>(40,40));
-    osd_col->AddWidget(slider2);
-    osd_r->AddWidget(osd_col);
+    osd_r->AddWidget(osd_rad);
 }
 
 TransformationTool::~TransformationTool() {
-    delete traBtn;
-    delete rotBtn;
-    delete sclBtn;
+    delete osd_r;
+    delete osd_rad;
 }
 
 bool TransformationTool::Handle(PointingDevice::MovedEventArg arg) {
     if (selection.empty()) return false;
     if (transformation->Transform(arg.state.x, arg.state.y, arg.dx, arg.dy, arg.select, selection, arg.vp))
         return true;
-    if (osd_col->FocusAt(arg.state.x, arg.state.y)) 
+    if (osd_rad->FocusAt(arg.state.x, arg.state.y)) 
         return true;
     return false;
 }
@@ -106,7 +91,7 @@ bool TransformationTool::Handle(PointingDevice::PressedEventArg arg) {
     switch (arg.btn) {
     case 0x1:
         IWidget* w;
-        if ((w = osd_col->ActivateFocus())) {
+        if ((w = osd_rad->ActivateFocus())) {
             if (w == traBtn) {
                 transformation = &translate;
             }
@@ -140,7 +125,7 @@ bool TransformationTool::Handle(PointingDevice::ReleasedEventArg arg) {
     case 0x1: 
         if (transformation->Reset())
             return true;
-        osd_col->Reset();//ActivateFocus(); 
+        osd_rad->Reset();//ActivateFocus(); 
         //@todo use OSDIWidget events instead of switches.
     };
     return false;
@@ -235,17 +220,7 @@ void TransformationTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r
     glPushAttrib(GL_LIGHTING_BIT);
     glPushAttrib(GL_DEPTH_BUFFER_BIT);
     glPushAttrib(GL_ENABLE_BIT);
-    //@todo: find a better tex-loading strategy
-    // if (traBtn->GetTexture()->GetID() == 0)
-    //     r.LoadTexture(traBtn->GetTexture());
-    // if (rotBtn->GetTexture()->GetID() == 0)
-    //     r.LoadTexture(rotBtn->GetTexture());
-    // if (sclBtn->GetTexture()->GetID() == 0)
-    //     r.LoadTexture(sclBtn->GetTexture());
-    // render the OSDCollection. The OSDRenderer does not setup the
-    // ModelViewMatrix but simply uses the current..
-    // osd_r->SetRenderer(r);
-    osd_r->Visit(osd_col);
+    osd_r->RenderWidgets();
     glPopAttrib();
     glPopAttrib();
     glPopAttrib();
@@ -254,14 +229,14 @@ void TransformationTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r
 TransformationTool::AxisWidget::Axis::Axis(float rot, 
                                            Vector<3,float> rotaxis, 
                                            Vector<3,float> dir, 
-                                           Vector<4,float> colr): 
-    quadr(gluNewQuadric()),
-    rot(rot), rotaxis(rotaxis), dir(dir), colr(colr) {
-    gluQuadricNormals(quadr, GLU_SMOOTH);
+                                           Vector<4,float> colr)
+    : rot(rot)
+    , rotaxis(rotaxis)
+    , dir(dir)
+    , colr(colr) {
 }
 
 TransformationTool::AxisWidget::Axis::~Axis() {
-    gluDeleteQuadric(quadr);
 } 
 
 
@@ -281,6 +256,7 @@ TransformationTool::AxisWidget::ZAxis::ZAxis():
 }
 
 void TransformationTool::AxisWidget::Axis::Apply(Renderers::IRenderingView* rv) {
+    quadr = gluNewQuadric();
     glPushMatrix();
     glColor4f(colr[0], colr[1], colr[2], colr[3]);
     glPushMatrix();
@@ -291,6 +267,7 @@ void TransformationTool::AxisWidget::Axis::Apply(Renderers::IRenderingView* rv) 
     glRotatef(rot, rotaxis[0], rotaxis[1], rotaxis[2]);
     gluCylinder(quadr, 1.0, 0.0, 3.0, 20, 10);
     glPopMatrix();
+    gluDeleteQuadric(quadr);
 }
 
 TransformationTool::AxisWidget::AxisWidget(): 

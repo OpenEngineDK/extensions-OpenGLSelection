@@ -111,8 +111,8 @@ IWidget* Collection::ActivateFocus() {
              itr != widgets.end();
              itr++) {
            (*itr)->Reset();
-           IWidget* _w;
-           if (_w = (*itr)->ActivateFocus()) w = _w;
+           IWidget* _w = (*itr)->ActivateFocus();
+           if (_w) w = _w;
        }
     }
     if (w) return w;
