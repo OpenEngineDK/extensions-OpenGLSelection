@@ -102,7 +102,7 @@ public:
 
 #define CONST(v) v
 
-#define OBJFUNC(v) obj->v()
+#define METHOD(v) obj->v()
 
 #define WIDGET_SLIDER(fname, getfunc, setfunc, lowfunc, low, highfunc, high) \
  {                                                                   \
@@ -117,11 +117,11 @@ public:
             w->ValueChangedEvent().Attach(*this);                       \
         }                                                               \
         void Handle(ValueChangedEventArg<float> e) {                    \
-            obj->setfunc(highfunc(high)-lowfunc(low)*e.value + lowfunc(low)); \
+            obj->setfunc((highfunc(high)-lowfunc(low))*e.value + lowfunc(low)); \
         }                                                               \
      };                                                                 \
      Slider* w = new Slider();                                          \
-     w->SetValue(highfunc(high)-lowfunc(low)*w->GetValue() + lowfunc(low)); \
+     w->SetValue(obj->getfunc()/float(highfunc(high)-lowfunc(low)));  \
      w->SetText(#fname);                                                \
      w->SetDimensions(Vector<2,int>(150,20));                           \
      _mutator_class* m = new _mutator_class(obj, w);                    \
