@@ -27,20 +27,33 @@ using std::string;
 using std::list;
 
 // mutator structure only for deallocation purposes
+template <class T>
 class Mutator {
+protected:
+    T* obj;
 public:
+    Mutator(T* obj): obj(obj) {}
+    void SetObject(T* obj) { this->obj = obj; }
     virtual ~Mutator() {}
 };
 
+template <class T>
 class Mutators {
 private:
-    list<Mutator*> mutators;
+    list<Mutator<T>*> mutators;
 public:
-    void AddMutator(Mutator* m) {
+    void AddMutator(Mutator<T>* m) {
         mutators.push_back(m);
     }
+    void SetObject(T* obj) {
+        for (typename list<Mutator<T>*>::iterator i = mutators.begin();
+             i != mutators.end();
+             ++i) {
+            (*i)->SetObject(obj);
+        }
+    };
     virtual ~Mutators() {
-        for (list<Mutator*>::iterator i = mutators.begin();
+        for (typename list<Mutator<T>*>::iterator i = mutators.begin();
              i != mutators.end();
              ++i) {
             delete (*i);
@@ -48,132 +61,99 @@ public:
     }
 };
 
-
-#define WIDGET_START(objtype)                            \
-class objtype##Widget : public Widgets::Collection {     \
-    private:                                                     \
-    objtype* obj;                                                \
-    public:                                                      \
-    virtual ~objtype##Widget() {}                                \
-    void SetObject(objtype* obj) { this->obj = obj; }             \
-    objtype* GetObject() { return obj; }                     \
-    objtype##Widget(objtype* obj): obj(obj) {              
-        
-#define WIDGET_STOP()                                        \
-            } \
-        };
-
-        
-#define WIDGET_INIT()                                       \
+#define WIDGET_START(objtype)                               \
+  class objtype##Widget : public Widgets::Collection {      \
   private:                                                  \
-    Collection _coll;                                       \
-    Mutators _mutators;                                     \
+    typedef objtype thetype;                                \
+    thetype* obj;                                           \
+    Mutators<thetype> mutators;                             \
   public:                                                   \
-    IWidget* GetWidget() { return &_coll; }
-
-#define ADD_WIDGET()                                            \
-        _coll.AddWidget(w);                                     \
-        _mutators.AddMutator(m);                                      
-
-#define WIDGET_PROPERTY(fname, getfunc, setfunc, objtype, actiontype)  \
-        actiontype(fname, getfunc, setfunc, objtype)                   \
-        ADD_WIDGET();                                                  \
-    }
-
-#define WIDGET_CSLIDER(fname, getfunc, setfunc, objtype, vtype, step)  \
- {                                                                   \
-     class _mutator_class: public IListener<ValueChangedEventArg<vtype> >, public Mutator { \
-        private:                                                        \
-          objtype* obj;                                                 \
+    virtual ~objtype##Widget() {}                           \
+    void SetObject(thetype* obj) {                          \
+        this->obj = obj;                                    \
+        mutators.SetObject(obj);                            \
+    }                                                       \
+    thetype* GetObject() { return obj; }                    \
+    objtype##Widget(thetype* obj): obj(obj) {
+      
+#define WIDGET_CSLIDER(name, getfunc, setfunc, vtype, step)            \
+{ class _mutator_class: public IListener<ValueChangedEventArg<vtype> >  \
+                      , public Mutator<thetype> {                       \
+      private:                                                          \
           CircularSlider<vtype>* w;                                     \
-        public:                                                         \
-        _mutator_class(objtype* obj, CircularSlider<vtype>* w)          \
-        : obj(obj)                                                      \
+      public:                                                           \
+    _mutator_class(thetype* obj, CircularSlider<vtype>* w)              \
+        : Mutator<thetype>(obj)                                         \
         , w(w)                                                          \
-        {                                                               \
-            w->ValueChangedEvent().Attach(*this);                       \
-        }                                                               \
-        void Handle(ValueChangedEventArg<vtype> e) {                    \
-            obj->setfunc(e.value);                                      \
-        }                                                               \
-    };                                                                  \
-     CircularSlider<vtype>* w = new CircularSlider<vtype>(this->getfunc(),step); \
-    w->SetText(#fname);                                                 \
-    w->SetDimensions(Vector<2,int>(40,40));                             \
-    _mutator_class* m = new _mutator_class(this, w);                    \
-        ADD_WIDGET();                                          \
-    }
+    {                                                                   \
+        w->ValueChangedEvent().Attach(*this);                           \
+    }                                                                   \
+    void Handle(ValueChangedEventArg<vtype> e) {                        \
+        obj->setfunc(e.value);                                          \
+    }                                                                   \
+      };                                                                \
+      CircularSlider<vtype>* w = new CircularSlider<vtype>(obj->getfunc(),step); \
+      w->SetText(#name);                                                \
+      w->SetDimensions(Vector<2,int>(40,40));                           \
+      _mutator_class* m = new _mutator_class(obj, w);                   \
+      mutators.AddMutator(m);                                           \
+      AddWidget(w);                                                     \
+    } 
 
-#define WIDGET_SLIDER(fname, getfunc, setfunc, objtype, vtype, low, high) \
+#define CONST(v) v
+
+#define OBJFUNC(v) obj->v()
+
+#define WIDGET_SLIDER(fname, getfunc, setfunc, lowfunc, low, highfunc, high) \
  {                                                                   \
-     class _mutator_class: public IListener<ValueChangedEventArg<float> >, public Mutator { \
+     class _mutator_class: public IListener<ValueChangedEventArg<float> >, public Mutator<thetype> { \
         private:                                                        \
-          objtype* obj;                                                 \
           Slider* w;                                                     \
         public:                                                         \
-        _mutator_class(objtype* obj, Slider* w)                         \
-        : obj(obj)                                                      \
+        _mutator_class(thetype* obj, Slider* w)                         \
+            : Mutator<thetype>(obj)                                     \
         , w(w)                                                          \
         {                                                               \
             w->ValueChangedEvent().Attach(*this);                       \
         }                                                               \
         void Handle(ValueChangedEventArg<float> e) {                    \
-            obj->setfunc((obj->high()-low)*e.value + low);              \
+            obj->setfunc(highfunc(high)-lowfunc(low)*e.value + lowfunc(low)); \
         }                                                               \
      };                                                                 \
      Slider* w = new Slider();                                          \
+     w->SetValue(highfunc(high)-lowfunc(low)*w->GetValue() + lowfunc(low)); \
      w->SetText(#fname);                                                \
      w->SetDimensions(Vector<2,int>(150,20));                           \
-     _mutator_class* m = new _mutator_class(this, w);                   \
-    ADD_WIDGET();                                                       \
+     _mutator_class* m = new _mutator_class(obj, w);                    \
+     this->AddWidget(w); \
+     mutators.AddMutator(m);\
     }
 
-#define INT_VALUE(fname, getfunc, setfunc, objtype)    \
-        VALUE(fname, getfunc, setfunc, objtype, int, 0, 1)
-
-#define FLOAT_VALUE(fname, getfunc, setfunc, objtype)       \
-        VALUE(fname, getfunc, setfunc, objtype, float, 0.0, 0.15)
-
-#define VALUE(fname, getfunc, setfunc, objtype, vtype, init, step)   \
- {                                                                   \
-    class _mutator_class: public IListener<ValueChangedEventArg<vtype> >, public Mutator { \
-        private:                                                        \
-          objtype* obj;                                                 \
-          CircularSlider<vtype>* w;                                     \
-        public:                                                         \
-        _mutator_class(objtype* obj, CircularSlider<vtype>* w)          \
-        : obj(obj)                                                      \
-        , w(w)                                                          \
-        {                                                               \
-            w->SetValue(obj->getfunc());                                \
-            w->ValueChangedEvent().Attach(*this);                       \
-        }                                                               \
-        void Handle(ValueChangedEventArg<vtype> e) {                    \
-            obj->setfunc(e.value);                                      \
-        }                                                               \
-    };                                                                  \
-    CircularSlider<vtype>* w = new CircularSlider<vtype>(init,step);    \
-    w->SetText(#fname);                                                 \
-    w->SetDimensions(Vector<2,int>(40,40));                             \
-    _mutator_class* m = new _mutator_class(this, w);                    \
-        
-#define BUTTON_STATE(fname, getfunc, setfunc, objtype)                  \
+#define WIDGET_BUTTON(fname, getfunc, setfunc)                          \
     {                                                                   \
-    class _mutator_class: public IListener<StateChangedEventArg>, public Mutator {  \
-        private:                                                        \
-          objtype* obj;                                                 \
+    class _mutator_class: public IListener<StateChangedEventArg>, public Mutator<thetype> { \
         public:                                                         \
-          _mutator_class(objtype* obj): obj(obj) {  }                   \
-          void Handle(StateChangedEventArg e) { obj->setfunc(e.state); } \
+         _mutator_class(thetype* obj): Mutator<thetype>(obj) {} \
+          void Handle(StateChangedEventArg e) { obj->setfunc(e.state); }\
         };                                                              \
-        _mutator_class* m = new _mutator_class(this);                   \
+        _mutator_class* m = new _mutator_class(obj);                    \
         Collection* w = new Collection(Collection::TOGGLE);             \
+        w->SetBackground(false);                                        \
+        w->SetFixed(true);                                              \
+        w->SetPadding(Vector<4,int>(0));                                \
         Button* c = new Button();                                       \
         c->SetActive(this->getfunc());                                  \
         c->SetText(#fname);                                             \
         c->SetDimensions(Vector<2,int>(40,40));                         \
         c->StateChangedEvent().Attach(*m);                              \
-        w->AddWidget(c);                                               
+        w->AddWidget(c);                                                \
+        AddWidget(w);                                                   \
+        mutators.AddMutator(m);                                         \
+    }        
+
+#define WIDGET_STOP()                                        \
+            } \
+        };        
 
 } // NS Utils
 } // NS OpenEngine
