@@ -41,6 +41,20 @@ MouseSelection::MouseSelection (IFrame& frame,
 {
 }
 
+MouseSelection::MouseSelection (IFrame& frame, 
+                                IMouse& mouse, 
+                                ISceneNode* root,
+                                ISceneSelection* ss
+                                )
+    : frame(frame) 
+    , mouse(mouse)
+    , scenesel(ss)
+    , pd(new PointingDevice())
+    , root (root)
+    , activeViewport(NULL)
+{
+}
+
 MouseSelection::~MouseSelection() {
     delete pd;
     delete scenesel;

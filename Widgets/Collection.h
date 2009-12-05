@@ -11,11 +11,13 @@
 #define _OE_WIDGETS_COLLECTION_
 
 #include <Widgets/IWidget.h>
+#include <Core/IListener.h>
 #include <list>
 
 namespace OpenEngine {
 namespace Widgets {
 
+using Core::IListener;
 /**
  * On Screen Display - Collection of Widgets.  
  *
@@ -24,17 +26,21 @@ namespace Widgets {
  *
  * @class Collection Collection.h OpenGLSelection/Utils/Collection.h
  */
-class Collection: public IWidget {
+class Collection: public IWidget, public IListener<DimensionsChangedEventArg> {
 public:
 enum Mode {SIMPLE, RADIO, TOGGLE};
 private:
     Mode mode;
     std::list<IWidget*> widgets;
     int dx, dy;
+    bool fixed, bg;
     IWidget *focusWidget;
     void UpdateWidgets();
+    // layout variables
+    int spacing;
+    Vector<4,int> padding;
 public:
-    Collection(): mode(SIMPLE) {}
+    explicit Collection();
     Collection(Mode mode);
     virtual ~Collection();
     // IWidget
@@ -47,11 +53,24 @@ public:
     void Reset();
 
     // Collection
+    void Handle(DimensionsChangedEventArg e);
+
+    // Widgets
     void AddWidget(IWidget* w);
     void RemoveWidget(IWidget* w);
     std::list<IWidget*> GetWidgets();
+
+    //Layout
+    void SetSpacing(int spacing);
+    int GetSpacing();
+    void SetPadding(Vector<4,int> padding);
+    Vector<4,int> GetPadding();
+    void SetFixed(bool fixed);
+    bool GetFixed();
+    void SetBackground(bool bg);
+    bool GetBackground();
 };
 
 } // NS Utils
 } // NS OpenEngine
-#endif //_OE_UTILS_WIDGETS_COLLECTION_
+#endif //_OE_WIDGETS_COLLECTION_

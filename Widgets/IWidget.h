@@ -27,6 +27,12 @@ class WidgetRenderer;
 class PointingDevice;
 class IWidget;
 
+class DimensionsChangedEventArg {
+public:
+    DimensionsChangedEventArg(IWidget* widget): widget(widget) {}
+    IWidget* widget;
+};
+
 class TextChangedEventArg {
 public:
     string text;
@@ -63,11 +69,13 @@ public:
 class IWidget {
 protected:
     int x, y, width, height;
-    bool active, focus;
+    bool active, focus, visible;
     string text;
+    Vector<2,int> textDims;
     Event<TextChangedEventArg> textEvent;
+    Event<DimensionsChangedEventArg> dimsEvent;
 public:
-    IWidget() : x(0), y(0), width(0), height(0), active(false), focus(false) {};
+    IWidget() : x(0), y(0), width(0), height(0), active(false), focus(false), visible(true), textDims(Vector<2,int>(0)) {};
     /**
      * Empty destructor.
      */
@@ -92,7 +100,11 @@ public:
      * Set the dimensions of the widget.
      * @param dim the width and height of the widget.
      */
-    virtual void SetDimensions(Math::Vector<2,int> dim) { width = dim[0]; height = dim[1]; };
+    virtual void SetDimensions(Math::Vector<2,int> dim) { 
+        width = dim[0]; 
+        height = dim[1]; 
+        dimsEvent.Notify(DimensionsChangedEventArg(this));
+    };
  
     /**
      * The rendering (visitor callback) method.  Every widget should
@@ -194,8 +206,16 @@ public:
         this->text = text; 
         textEvent.Notify(TextChangedEventArg(text, this)); 
     };
-    
+
+    virtual void SetTextDimensions(Vector<2,int> dims) { textDims = dims; };
+    virtual Vector<2,int> GetTextDimensions(Vector<2,int> dims) { return textDims; };
+
+    bool GetVisible() { return visible; }
+
+    void SetVisible(bool visible) { this->visible = visible; }
+
     Event<TextChangedEventArg>& TextChangedEvent() { return textEvent; }
+    Event<DimensionsChangedEventArg>& DimensionsChangedEvent() { return dimsEvent; }
 };
 
 } // NS Utils

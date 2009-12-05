@@ -54,6 +54,7 @@ public:
     IWidget* ActivateAt(int x, int y);
     IWidget* ActivateFocus();
     void Reset();
+    void SetTextDimensions(Vector<2,int> dims);
     Event<StateChangedEventArg>& StateChangedEvent() { return e; }
 
 };

@@ -40,6 +40,7 @@ void Button::SetActive(bool active) {
     this->active = active;
     e.Notify(StateChangedEventArg(active));
 }
+
 IWidget* Button::FocusAt(int x, int y) {
     if (WidgetAt(x,y)) {
         SetFocus(true);
@@ -68,6 +69,11 @@ IWidget* Button::ActivateFocus() {
 
 void Button::Reset() {
     SetActive(false);
+}
+
+void Button::SetTextDimensions(Vector<2,int> dims) {
+    textDims = dims;
+    this->SetDimensions(dims);
 }
 
 } // NS Widgets

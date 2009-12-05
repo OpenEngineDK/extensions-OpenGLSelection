@@ -105,10 +105,13 @@ void WidgetRenderer::Visit(Slider* w) {
     Vector<2,int> dim = w->GetDimensions();
     
     float val = w->GetValue();
-    float knob_width = 10.0f;
-    float knob_height = dim[1] + 10.0f; 
+    float knob_width = 0.5 * dim[1];
+    float knob_height = dim[1]; 
     Vector<2,float> knob_pos(pos[0] + dim[0] * val - (0.5 * knob_width),
-                             pos[1] + 0.5 * dim[1] - 0.5 * knob_height);
+                             pos[1]);
+
+    dim[1] *= 0.5; 
+    pos[1] += 0.5 * dim[1]; 
 
     float col[4];
     activeColor.ToArray(col);
@@ -171,13 +174,11 @@ void WidgetRenderer::Visit(CircularSlider<int>* w) {
 }
 
 void WidgetRenderer::Visit(Collection* w) {
-    if (++coll_depth == 0) {
+    if (!w->GetVisible()) return;
+    if (w->GetBackground()) {
         //draw bg
-        int pad = 10;
         Vector<2,int> pos = w->GetPosition();
-        pos = Vector<2,int>(pos[0]-pad, pos[1]-pad); //padding
         Vector<2,int> dim = w->GetDimensions();
-        dim = Vector<2,int>(dim[0]+2*pad, dim[1]+2*pad); 
         glDisable(GL_TEXTURE_2D);
         glBegin(GL_QUADS);
         glColor4f(0.7,0.7,.9,0.9);
@@ -187,6 +188,7 @@ void WidgetRenderer::Visit(Collection* w) {
         glVertex3f(pos[0] + dim[0], pos[1], -1.0);
         glEnd();
         // border
+        glEnable(GL_LINE_SMOOTH);
         glLineWidth(2.0);
         glBegin(GL_LINE_STRIP);
         glColor4f(activeColor[0], activeColor[1], activeColor[2], activeColor[3]);
@@ -197,6 +199,7 @@ void WidgetRenderer::Visit(Collection* w) {
         glVertex3f(pos[0], pos[1], -1.0);
         glEnd();
     }
+    
     list<IWidget*> widgets = w->GetWidgets();
     for (list<IWidget*>::iterator i = widgets.begin();
          i != widgets.end();
@@ -277,6 +280,7 @@ ITextureResourcePtr WidgetRenderer::Initializer::LookupText(IWidget* w, IFontRes
         texr = font->CreateFontTexture();
         text_map[w] = texr;
         texr->SetText(w->GetText());
+        w->SetTextDimensions(Vector<2,int>(texr->GetWidth(),texr->GetHeight()));        
         texloader.Load(texr, TextureLoader::RELOAD_IMMEDIATE);
     }
     return texr;
@@ -284,15 +288,17 @@ ITextureResourcePtr WidgetRenderer::Initializer::LookupText(IWidget* w, IFontRes
 
 void WidgetRenderer::Initializer::Handle(TextChangedEventArg e) {
     IFontTextureResourcePtr texr = text_map[e.widget];
-    if (texr != NULL)
+    if (texr != NULL) {
         texr->SetText(e.text);
+        e.widget->SetTextDimensions(Vector<2,int>(texr->GetWidth(),texr->GetHeight()));
+    }
 }
 
 void WidgetRenderer::Initializer::Handle(ValueChangedEventArg<float> e) {
     IFontTextureResourcePtr texr = val_map[e.widget];
     if (texr == NULL) return;
     char s[10];
-    sprintf(s, "%.1f", e.value);
+    snprintf(s, 10, "%.1f", e.value);
     texr->SetText(s);
 }
 
@@ -300,7 +306,7 @@ void WidgetRenderer::Initializer::Handle(ValueChangedEventArg<int> e) {
     IFontTextureResourcePtr texr = val_map[e.widget];
     if (texr == NULL) return;
     char s[10];
-    sprintf(s, "%d", e.value);
+    snprintf(s, 10, "%d", e.value);
     texr->SetText(s);
 }
 

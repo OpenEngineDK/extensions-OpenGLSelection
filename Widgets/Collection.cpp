@@ -20,10 +20,24 @@ using namespace Math;
 using namespace std;
 using namespace Core;
 
+Collection::Collection()
+    : IWidget()
+    , mode(SIMPLE)
+    , fixed(true)
+    , bg(false)
+    , focusWidget(NULL)
+    , spacing(5)
+    , padding(Vector<4,int>(10))
+{}
+
 Collection::Collection(Mode mode)
     : IWidget()
     , mode(mode)
+    , fixed(false)
+    , bg(true)
     , focusWidget(NULL)
+    , spacing(5)
+    , padding(Vector<4,int>(10))
 {}
 
 Collection::~Collection() {
@@ -59,6 +73,7 @@ IWidget* Collection::WidgetAt(int x, int y) {
 
 void Collection::AddWidget(IWidget* w) {
     widgets.push_back(w);
+    w->DimensionsChangedEvent().Attach(*this);
     UpdateWidgets();
 }
 
@@ -68,7 +83,7 @@ void Collection::RemoveWidget(IWidget* w) {
 }
 
 IWidget* Collection::FocusAt(int x, int y) {
-    if (active) {
+    if (active && !fixed) {
         SetPosition(Vector<2,int>(x-dx, y-dy));
         return this;
     }
@@ -152,22 +167,60 @@ list<IWidget*> Collection::GetWidgets() {
 
 void Collection::UpdateWidgets() {
     int i = 0;
-    int acc_y = y;
+    int acc_y = y - spacing + padding[1];
     width = 0;
     for (list<IWidget*>::iterator itr = widgets.begin(); 
          itr != widgets.end();
          itr++) {
         IWidget* w = *itr;
-        int y_space = 2;
-        int w_y = y_space + acc_y;
-        w->SetPosition(Vector<2,int>(x,w_y));
+        int w_y = spacing + acc_y;
+        w->SetPosition(Vector<2,int>(x + padding[0], w_y));
         i++;
         width = fmax(w->GetDimensions()[0], width);
-        acc_y += w->GetDimensions()[1] + y_space;
+        acc_y += w->GetDimensions()[1] + spacing;
     }
-    height = acc_y-y;
+    width += padding[0] + padding[2];
+    height = acc_y - y + padding[3];
 }
 
+void Collection::SetSpacing(int spacing) {
+    this->spacing = spacing;
+    UpdateWidgets();
+}
+
+int Collection::GetSpacing() {
+    return spacing;
+}
+
+void Collection::SetPadding(Vector<4,int> padding) {
+    this->padding = padding;
+    UpdateWidgets();
+}
+
+Vector<4,int> Collection::GetPadding() {
+    return padding;
+}
+
+void Collection::SetFixed(bool fixed) {
+    this->fixed = fixed;
+}
+
+bool Collection::GetFixed() {
+    return fixed;
+}
+
+void Collection::SetBackground(bool bg) {
+    this->bg = bg;
+}
+
+bool Collection::GetBackground() {
+    return bg;
+}
+
+
+void Collection::Handle(DimensionsChangedEventArg e) {
+    UpdateWidgets();
+}
 
 } // NS Utils
 } // NS OpenEngine

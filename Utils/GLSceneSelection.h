@@ -35,10 +35,8 @@ namespace OpenEngine {
     }
 namespace Utils {
 
-class GLSceneSelection: public ISceneSelection {
-private:
     class SelectionRenderer : public Scene::ISceneNodeVisitor {
-    private:
+    protected:
         class HitTuple {
         public:
             Scene::ISceneNode* node;
@@ -66,10 +64,16 @@ private:
         void VisitGeometryNode(Scene::GeometryNode* node);
         void VisitRenderNode(Scene::RenderNode* node);
     };
-    SelectionRenderer sr;
+
+class GLSceneSelection: public ISceneSelection {
+private:
     Display::IFrame& frame;
+    SelectionRenderer* sr;
 public:
     GLSceneSelection(Display::IFrame& frame);
+    GLSceneSelection(Display::IFrame& frame, SelectionRenderer* sr);
+    ~GLSceneSelection();
+
     Geometry::Ray                 Unproject(int x, int y, Display::Viewport& viewport);    
     Math::Vector<2,float>         Project(Math::Vector<3,float> point, Display::Viewport& viewport);
     std::list<Scene::ISceneNode*> SelectPoint(int x, int y, Scene::ISceneNode* root, 

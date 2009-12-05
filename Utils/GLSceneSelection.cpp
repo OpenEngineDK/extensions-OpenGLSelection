@@ -31,8 +31,22 @@ using namespace Display;
 using namespace std;
 using namespace Geometry;
 
-GLSceneSelection::GLSceneSelection(IFrame& frame) : frame(frame) {
+GLSceneSelection::GLSceneSelection(IFrame& frame) 
+    : frame(frame)
+    , sr(new SelectionRenderer())
+{
+    
+}
 
+GLSceneSelection::GLSceneSelection(IFrame& frame, SelectionRenderer* sr) 
+    : frame(frame) 
+    , sr(sr)
+{
+
+}
+
+GLSceneSelection::~GLSceneSelection() {
+    delete sr;
 }
 
 list<ISceneNode*> GLSceneSelection::SelectPointOrtho(int x, int y, ISceneNode* root, Viewport& viewport, ISceneNode* context) {
@@ -42,13 +56,13 @@ list<ISceneNode*> GLSceneSelection::SelectPointOrtho(int x, int y, ISceneNode* r
                                   /*top*/frame.GetHeight()-d[1]-d[3],
                                   /*bottom*/frame.GetHeight()-d[1]);
     vp.SetViewingVolume(&ortho);
-    return sr.Render (vp, root, x, frame.GetHeight()-y, 1, 1, context);
+    return sr->Render (vp, root, x, frame.GetHeight()-y, 1, 1, context);
 }
 
     list<ISceneNode*> GLSceneSelection::SelectPoint(int x, int y, ISceneNode* root, Viewport& viewport, ISceneNode* context) {
     Vector<4,int> d = viewport.GetDimension();
     // convert from local viewport coordinates
-    return sr.Render (viewport, root, x+d[0], (-1)*(y-d[3]-d[1]), 1, 1, context);
+    return sr->Render (viewport, root, x+d[0], (-1)*(y-d[3]-d[1]), 1, 1, context);
     // return sr.Render (viewport, root, x, frame.GetHeight()-y, 1, 1);
 }
 
@@ -62,7 +76,7 @@ list<ISceneNode*> GLSceneSelection::SelectRegion(int x1, int y1, int x2, int y2,
     int y      = max(y1,y2) - height/2;
     Vector<4,int> d = viewport.GetDimension();
     // convert from local viewport coordinates
-    return sr.Render(viewport, root, x+d[0], (-1)*(y-d[3]-d[1]), width, height, context);
+    return sr->Render(viewport, root, x+d[0], (-1)*(y-d[3]-d[1]), width, height, context);
     //return sr.Render(viewport, root, x, frame.GetHeight()-y), width, height);
 }
 
@@ -104,11 +118,11 @@ Ray GLSceneSelection::Unproject(int x, int y, Viewport& viewport) {
     return Ray(volume->GetPosition(), p1-volume->GetPosition());
 }
 
-GLSceneSelection::SelectionRenderer::SelectionRenderer() {
+SelectionRenderer::SelectionRenderer() {
 
 }
   
-list<ISceneNode*> GLSceneSelection::SelectionRenderer::Render(Viewport& viewport, 
+list<ISceneNode*> SelectionRenderer::Render(Viewport& viewport, 
                                                               ISceneNode* root,
                                                               int x, int y, int width, int height,
                                                               ISceneNode* context) {
@@ -198,7 +212,7 @@ list<ISceneNode*> GLSceneSelection::SelectionRenderer::Render(Viewport& viewport
     return hitlist;
 }
 
-void GLSceneSelection::SelectionRenderer::VisitTransformationNode(TransformationNode* node) {
+void SelectionRenderer::VisitTransformationNode(TransformationNode* node) {
     glPushName(count++);
     CHECK_FOR_GL_ERROR();
     names.push_back(node);
@@ -218,7 +232,7 @@ void GLSceneSelection::SelectionRenderer::VisitTransformationNode(Transformation
     CHECK_FOR_GL_ERROR();
 }
 
-void GLSceneSelection::SelectionRenderer::VisitGeometryNode(GeometryNode* node) {
+void SelectionRenderer::VisitGeometryNode(GeometryNode* node) {
     glPushName(count++);
     CHECK_FOR_GL_ERROR();
     names.push_back(node);
@@ -241,7 +255,7 @@ void GLSceneSelection::SelectionRenderer::VisitGeometryNode(GeometryNode* node) 
     glPopName();
 }
 
-void GLSceneSelection::SelectionRenderer::VisitRenderNode(RenderNode* node) {
+void SelectionRenderer::VisitRenderNode(RenderNode* node) {
     glPushName(count++);
     CHECK_FOR_GL_ERROR();
     names.push_back(node);

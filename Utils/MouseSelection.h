@@ -59,6 +59,10 @@ public:
     MouseSelection(Display::IFrame& frame, 
                    Devices::IMouse& mouse, 
                    Scene::ISceneNode* root);
+    MouseSelection(Display::IFrame& frame, 
+                   Devices::IMouse& mouse, 
+                   Scene::ISceneNode* root,
+                   ISceneSelection* ss);
     virtual ~MouseSelection();
 
     void Handle(Devices::MouseMovedEventArg arg);

@@ -48,6 +48,22 @@ public:
     }
 };
 
+
+#define WIDGET_START(objtype)                            \
+class objtype##Widget : public Widgets::Collection {     \
+    private:                                                     \
+    objtype* obj;                                                \
+    public:                                                      \
+    virtual ~objtype##Widget() {}                                \
+    void SetObject(objtype* obj) { this->obj = obj; }             \
+    objtype* GetObject() { return obj; }                     \
+    objtype##Widget(objtype* obj): obj(obj) {              
+        
+#define WIDGET_STOP()                                        \
+            } \
+        };
+
+        
 #define WIDGET_INIT()                                       \
   private:                                                  \
     Collection _coll;                                       \
@@ -102,12 +118,12 @@ public:
             w->ValueChangedEvent().Attach(*this);                       \
         }                                                               \
         void Handle(ValueChangedEventArg<float> e) {                    \
-            obj->setfunc((obj->high()-low)*e.value + low);                   \
+            obj->setfunc((obj->high()-low)*e.value + low);              \
         }                                                               \
      };                                                                 \
      Slider* w = new Slider();                                          \
      w->SetText(#fname);                                                \
-     w->SetDimensions(Vector<2,int>(150,10));                           \
+     w->SetDimensions(Vector<2,int>(150,20));                           \
      _mutator_class* m = new _mutator_class(this, w);                   \
     ADD_WIDGET();                                                       \
     }
