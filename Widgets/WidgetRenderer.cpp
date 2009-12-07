@@ -220,11 +220,11 @@ WidgetRenderer::Initializer::Initializer(TextureLoader& texloader,
     , val_map(val_map) 
 {
     largefont = ResourceManager<IFontResource>::Create("Fonts/FreeSerif.ttf");
-    largefont->SetPointSize(20);
+    largefont->SetSize(20);
     largefont->Load();
     smallfont = ResourceManager<IFontResource>::Create("Fonts/FreeSerif.ttf");
-    smallfont->SetPointSize(14);
-    smallfont->SetFontStyle(FONT_STYLE_BOLD);
+    smallfont->SetSize(14);
+    smallfont->SetStyle(FONT_STYLE_BOLD);
     smallfont->Load();
 }
 
