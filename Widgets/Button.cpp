@@ -36,10 +36,11 @@ IWidget* Button::WidgetAt(int x, int y) {
     return NULL;
 }
 
-void Button::SetActive(bool active) {
-    this->active = active;
-    e.Notify(StateChangedEventArg(active));
-}
+// void Button::SetActive(bool active) {
+//     bool changed = (this->active == active);
+//     this->active = active;
+//     if (changed) e.Notify(StateChangedEventArg(active));
+// }
 
 IWidget* Button::FocusAt(int x, int y) {
     if (WidgetAt(x,y)) {

@@ -76,7 +76,7 @@ public:
     thetype* GetObject() { return obj; }                    \
     objtype##Widget(thetype* obj): obj(obj) {
       
-#define WIDGET_CSLIDER(name, getfunc, setfunc, vtype, step)            \
+#define WIDGET_CSLIDER(name, getfunc, setfunc, vtype, step)             \
 { class _mutator_class: public IListener<ValueChangedEventArg<vtype> >  \
                       , public Mutator<thetype> {                       \
       private:                                                          \
@@ -105,10 +105,10 @@ public:
 #define METHOD(v) obj->v()
 
 #define WIDGET_SLIDER(fname, getfunc, setfunc, lowfunc, low, highfunc, high) \
- {                                                                   \
+ {                                                                      \
      class _mutator_class: public IListener<ValueChangedEventArg<float> >, public Mutator<thetype> { \
         private:                                                        \
-          Slider* w;                                                     \
+          Slider* w;                                                    \
         public:                                                         \
         _mutator_class(thetype* obj, Slider* w)                         \
             : Mutator<thetype>(obj)                                     \
@@ -121,7 +121,7 @@ public:
         }                                                               \
      };                                                                 \
      Slider* w = new Slider();                                          \
-     w->SetValue(obj->getfunc()/float(highfunc(high)-lowfunc(low)));  \
+     w->SetValue(obj->getfunc()/float(highfunc(high)-lowfunc(low)));    \
      w->SetText(#fname);                                                \
      w->SetDimensions(Vector<2,int>(150,20));                           \
      _mutator_class* m = new _mutator_class(obj, w);                    \
@@ -129,12 +129,15 @@ public:
      mutators.AddMutator(m);\
     }
 
-#define WIDGET_BUTTON(fname, getfunc, setfunc)                          \
+#define WIDGET_BUTTON(fname, getfunc, setfunc, type)                    \
+        type(fname, getfunc, setfunc)
+
+#define TOGGLE(fname, getfunc, setfunc)                                 \
     {                                                                   \
-    class _mutator_class: public IListener<StateChangedEventArg>, public Mutator<thetype> { \
+    class _mutator_class: public IListener<ActiveChangedEventArg>, public Mutator<thetype> { \
         public:                                                         \
-         _mutator_class(thetype* obj): Mutator<thetype>(obj) {} \
-          void Handle(StateChangedEventArg e) { obj->setfunc(e.state); }\
+         _mutator_class(thetype* obj): Mutator<thetype>(obj) {}         \
+         void Handle(ActiveChangedEventArg e) { obj->setfunc(e.widget->GetActive()); } \
         };                                                              \
         _mutator_class* m = new _mutator_class(obj);                    \
         Collection* w = new Collection(Collection::TOGGLE);             \
@@ -145,14 +148,30 @@ public:
         c->SetActive(this->getfunc());                                  \
         c->SetText(#fname);                                             \
         c->SetDimensions(Vector<2,int>(40,40));                         \
-        c->StateChangedEvent().Attach(*m);                              \
+        c->ActiveChangedEvent().Attach(*m);                              \
         w->AddWidget(c);                                                \
         AddWidget(w);                                                   \
         mutators.AddMutator(m);                                         \
     }        
 
-#define WIDGET_STOP()                                        \
-            } \
+#define TRIGGER(fname, getfunc, setfunc)                                \
+    {                                                                   \
+    class _mutator_class: public IListener<ActiveChangedEventArg>, public Mutator<thetype> { \
+        public:                                                         \
+         _mutator_class(thetype* obj): Mutator<thetype>(obj) {}         \
+         void Handle(ActiveChangedEventArg e) { if (e.widget->GetActive()) obj->setfunc(); } \
+        };                                                              \
+        _mutator_class* m = new _mutator_class(obj);                    \
+        Button* w = new Button();                                       \
+        w->SetText(#fname);                                             \
+        w->ActiveChangedEvent().Attach(*m);                             \
+        AddWidget(w);                                                   \
+        mutators.AddMutator(m);                                         \
+    }        
+
+
+#define WIDGET_STOP()                                                   \
+            }                                                           \
         };        
 
 } // NS Utils

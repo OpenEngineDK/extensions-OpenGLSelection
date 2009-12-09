@@ -26,12 +26,6 @@ using Core::Event;
 
 class WidgetRenderer;
 
-class StateChangedEventArg {
-public:
-    bool state;
-    StateChangedEventArg (bool state): state(state) {}
-};
-
 /**
  * On Screen Display Button Class.  
  *
@@ -42,12 +36,10 @@ public:
  */
 class Button: public IWidget {
 private:
-    Event<StateChangedEventArg> e;
 public:
     Button();
     virtual ~Button();
     
-    void SetActive(bool active);
     void Accept(IWidgetRenderer& r);
     IWidget* WidgetAt(int x, int y);
     IWidget* FocusAt(int x, int y);
@@ -55,7 +47,7 @@ public:
     IWidget* ActivateFocus();
     void Reset();
     void SetTextDimensions(Vector<2,int> dims);
-    Event<StateChangedEventArg>& StateChangedEvent() { return e; }
+    // Event<StateChangedEventArg>& StateChangedEvent() { return e; }
 
 };
 

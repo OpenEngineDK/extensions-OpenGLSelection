@@ -82,7 +82,7 @@ void WidgetTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r) {
 }
 
 void WidgetTool::AddWidget(IWidget* w) {
-    w->SetPosition(Vector<2,int>(20,20));
+    // w->SetPosition(Vector<2,int>(20,20));
     wr->AddWidget(w);
     widgets.push_back(w);
 }

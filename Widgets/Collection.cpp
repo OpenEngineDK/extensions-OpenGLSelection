@@ -168,7 +168,7 @@ list<IWidget*> Collection::GetWidgets() {
 void Collection::UpdateWidgets() {
     int i = 0;
     int acc_y = y - spacing + padding[1];
-    width = 0;
+    int _width = 0;
     for (list<IWidget*>::iterator itr = widgets.begin(); 
          itr != widgets.end();
          itr++) {
@@ -176,11 +176,11 @@ void Collection::UpdateWidgets() {
         int w_y = spacing + acc_y;
         w->SetPosition(Vector<2,int>(x + padding[0], w_y));
         i++;
-        width = fmax(w->GetDimensions()[0], width);
+        _width = fmax(w->GetDimensions()[0], _width);
         acc_y += w->GetDimensions()[1] + spacing;
     }
-    width += padding[0] + padding[2];
-    height = acc_y - y + padding[3];
+    this->SetDimensions(Vector<2,int>(_width + padding[0] + padding[2],
+                                acc_y - y + padding[3]));
 }
 
 void Collection::SetSpacing(int spacing) {

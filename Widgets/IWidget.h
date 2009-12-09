@@ -27,6 +27,13 @@ class WidgetRenderer;
 class PointingDevice;
 class IWidget;
 
+class ActiveChangedEventArg {
+public:
+    ActiveChangedEventArg (IWidget* widget): widget(widget) {}
+    IWidget* widget;
+};
+
+
 class DimensionsChangedEventArg {
 public:
     DimensionsChangedEventArg(IWidget* widget): widget(widget) {}
@@ -74,6 +81,7 @@ protected:
     Vector<2,int> textDims;
     Event<TextChangedEventArg> textEvent;
     Event<DimensionsChangedEventArg> dimsEvent;
+    Event<ActiveChangedEventArg> activeEvent;
 public:
     IWidget() : x(0), y(0), width(0), height(0), active(false), focus(false), visible(true), textDims(Vector<2,int>(0)) {};
     /**
@@ -101,9 +109,10 @@ public:
      * @param dim the width and height of the widget.
      */
     virtual void SetDimensions(Math::Vector<2,int> dim) { 
+        bool changed = (width != dim[0] || height != dim[1]); 
         width = dim[0]; 
         height = dim[1]; 
-        dimsEvent.Notify(DimensionsChangedEventArg(this));
+        if (changed) dimsEvent.Notify(DimensionsChangedEventArg(this));
     };
  
     /**
@@ -177,7 +186,11 @@ public:
      * 
      * @param active the active state.
      */
-    virtual void SetActive(bool active) { this->active = active; };
+    virtual void SetActive(bool active) { 
+        bool changed = (this->active != active); 
+        this->active = active; 
+        if (changed) activeEvent.Notify(ActiveChangedEventArg(this));
+    };
 
     /**
      * Get the active state of the widget.
@@ -216,6 +229,7 @@ public:
 
     Event<TextChangedEventArg>& TextChangedEvent() { return textEvent; }
     Event<DimensionsChangedEventArg>& DimensionsChangedEvent() { return dimsEvent; }
+    Event<ActiveChangedEventArg>& ActiveChangedEvent() { return activeEvent; }
 };
 
 } // NS Utils
