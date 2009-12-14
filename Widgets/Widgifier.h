@@ -145,7 +145,7 @@ public:
         w->SetFixed(true);                                              \
         w->SetPadding(Vector<4,int>(0));                                \
         Button* c = new Button();                                       \
-        c->SetActive(this->getfunc());                                  \
+        c->SetActive(obj->getfunc());                                  \
         c->SetText(#fname);                                             \
         c->SetDimensions(Vector<2,int>(40,40));                         \
         c->ActiveChangedEvent().Attach(*m);                              \
