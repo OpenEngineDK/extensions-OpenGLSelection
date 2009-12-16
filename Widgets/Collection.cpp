@@ -83,10 +83,25 @@ void Collection::RemoveWidget(IWidget* w) {
 }
 
 IWidget* Collection::FocusAt(int x, int y) {
-    if (active && !fixed) {
+    if (active) {
         SetPosition(Vector<2,int>(x-dx, y-dy));
         return this;
     }
+    if (x >= this->x && x < this->x + width && y >= this->y && y < this->y + height) {
+        dx = x - this->x;
+        dy = y - this->y;
+        SetFocus(true);
+    }
+    else { 
+        // assume that no widget has focus if collection does not has focus.
+        SetFocus(false);
+        for (list<IWidget*>::iterator itr = widgets.begin(); 
+             itr != widgets.end();
+             itr++) {
+            (*itr)->SetFocus(false);
+        }
+        return NULL;
+    } 
     focusWidget = NULL;
     for (list<IWidget*>::iterator itr = widgets.begin(); 
          itr != widgets.end();
@@ -95,54 +110,69 @@ IWidget* Collection::FocusAt(int x, int y) {
         if (w) focusWidget = w;
     }
     if (focusWidget) {
-        SetFocus(false);
-        return focusWidget;
-    }
-    if (x >= this->x && x < this->x + width && y >= this->y && y < this->y + height) {
-        dx = x - this->x;
-        dy = y - this->y;
-        SetFocus(true);
-        return this;
-    }
-    SetFocus(false);
-    return NULL;
+            return focusWidget;
+        }
+    return this;
 }
 
 IWidget* Collection::ActivateAt(int x, int y) {
-    throw new Exception("Not implemented");
+    throw new Exception("ActiveAt method not implemented on Collection class.");
 }
 
 IWidget* Collection::ActivateFocus() {
-    if (!focusWidget) {
-        if (GetFocus()) {
-            SetActive(true);
-            return this;
-        }
-        else return NULL;
-    }
+    if (!GetFocus()) return NULL;
     IWidget* w = NULL;
-    if (mode == SIMPLE || mode == RADIO) {
-       for (list<IWidget*>::iterator itr = widgets.begin(); 
+    if (mode == SIMPLE) {
+        for (list<IWidget*>::iterator itr = widgets.begin(); 
              itr != widgets.end();
              itr++) {
-           (*itr)->Reset();
-           IWidget* _w = (*itr)->ActivateFocus();
-           if (_w) w = _w;
-       }
+            (*itr)->Reset();
+            IWidget* _w = (*itr)->ActivateFocus();
+            if (_w) w = _w;
+        }
+        if (w) {
+            return w;
+        }
     }
-    if (w) return w;
-    if (mode == TOGGLE) {
-       for (list<IWidget*>::iterator itr = widgets.begin(); 
+    if (mode == RADIO) {
+        bool f = false;
+        for (list<IWidget*>::iterator itr = widgets.begin(); 
              itr != widgets.end();
-         itr++) {
+             itr++) {
+            if ((*itr)->GetFocus()) {
+                f = true;
+                break;
+            }
+        }
+        if (f) {
+            for (list<IWidget*>::iterator itr = widgets.begin(); 
+                 itr != widgets.end();
+                 itr++) {
+                (*itr)->Reset();
+                IWidget* _w = (*itr)->ActivateFocus();
+                if (_w) w = _w;
+            }
+            if (w) {
+                return w;
+            }
+        }
+    }
+    if (mode == TOGGLE) {
+        for (list<IWidget*>::iterator itr = widgets.begin(); 
+             itr != widgets.end();
+             itr++) {
             IWidget* w = (*itr); 
             if (w->GetFocus()) {
                 w->SetActive(!w->GetActive());
                 return w;
             }
-       }
+        }        
     }
-    return NULL;
+    if (GetFocus() && !fixed) {
+        SetActive(true);
+        return this;
+    }
+    else return NULL;
 }
 
 void Collection::Reset() {

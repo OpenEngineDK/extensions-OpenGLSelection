@@ -78,8 +78,9 @@ private:
     map<IWidget*, IFontTextureResourcePtr> text_map;
     map<IWidget*, IFontTextureResourcePtr> val_map;
     ITextureResourcePtr sliderTex;
-    Math::Vector<4,float> activeColor, inactiveColor;
-    int coll_depth;
+    Math::Vector<4,float> activeColor, inactiveColor, bgColor;
+    float alpha;
+    int collDepth;
     inline void RenderQuad(ITextureResourcePtr texr, float x, float y, float width, float height, float* col);
     void RenderCircularSlider(IWidget* w, float angle, float sweep);
 public:

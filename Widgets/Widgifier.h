@@ -123,7 +123,7 @@ public:
      Slider* w = new Slider();                                          \
      w->SetValue(obj->getfunc()/float(highfunc(high)-lowfunc(low)));    \
      w->SetText(#fname);                                                \
-     w->SetDimensions(Vector<2,int>(150,20));                           \
+     w->SetDimensions(Vector<2,int>(100,10));                           \
      _mutator_class* m = new _mutator_class(obj, w);                    \
      this->AddWidget(w); \
      mutators.AddMutator(m);\
@@ -141,14 +141,14 @@ public:
         };                                                              \
         _mutator_class* m = new _mutator_class(obj);                    \
         Collection* w = new Collection(Collection::TOGGLE);             \
-        w->SetBackground(false);                                        \
+        w->SetBackground(false);                                         \
         w->SetFixed(true);                                              \
-        w->SetPadding(Vector<4,int>(0));                                \
+        w->SetPadding(Vector<4,int>(4));                                \
         Button* c = new Button();                                       \
-        c->SetActive(obj->getfunc());                                  \
+        c->SetActive(obj->getfunc());                                   \
         c->SetText(#fname);                                             \
         c->SetDimensions(Vector<2,int>(40,40));                         \
-        c->ActiveChangedEvent().Attach(*m);                              \
+        c->ActiveChangedEvent().Attach(*m);                             \
         w->AddWidget(c);                                                \
         AddWidget(w);                                                   \
         mutators.AddMutator(m);                                         \
@@ -161,10 +161,15 @@ public:
          _mutator_class(thetype* obj): Mutator<thetype>(obj) {}         \
          void Handle(ActiveChangedEventArg e) { if (e.widget->GetActive()) obj->setfunc(); } \
         };                                                              \
+        Collection* w = new Collection(Collection::SIMPLE);             \
+        w->SetBackground(false);                                         \
+        w->SetFixed(true);                                              \
+        w->SetPadding(Vector<4,int>(4));                                \
         _mutator_class* m = new _mutator_class(obj);                    \
-        Button* w = new Button();                                       \
-        w->SetText(#fname);                                             \
-        w->ActiveChangedEvent().Attach(*m);                             \
+        Button* c = new Button();                                       \
+        c->SetText(#fname);                                             \
+        c->ActiveChangedEvent().Attach(*m);                             \
+        w->AddWidget(c);                                                \
         AddWidget(w);                                                   \
         mutators.AddMutator(m);                                         \
     }        

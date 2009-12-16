@@ -31,7 +31,9 @@ WidgetRenderer::WidgetRenderer(TextureLoader& texloader)
     : initializer(texloader, text_map, val_map)
     , activeColor(Vector<4,float>(.2,.2,.5, 1.0))
     , inactiveColor(Vector<4,float>(0.2, 0.2, 0.5, 0.5))
-    , coll_depth(-1)
+    , bgColor(Vector<4,float>(0.7,0.7,.9,0.9))
+    , alpha(1.0)
+    , collDepth(-1)
 {
     sliderTex = ResourceManager<ITextureResource>::Create("slider_bg.png");
     texloader.Load(sliderTex);
@@ -97,6 +99,7 @@ void WidgetRenderer::Visit(Button* w) {
         inactiveColor.ToArray(col);
         pos = pos - Vector<2,int>(1,1);
     }
+    col[3] *= alpha;
     RenderQuad(text, pos[0], pos[1], dim[0], dim[1], col);
 }
 
@@ -115,6 +118,7 @@ void WidgetRenderer::Visit(Slider* w) {
 
     float col[4];
     activeColor.ToArray(col);
+    col[3] *= alpha;
     //draw slider
     RenderQuad(sliderTex, pos[0], pos[1], dim[0], dim[1], col);
     //draw knob
@@ -175,13 +179,20 @@ void WidgetRenderer::Visit(CircularSlider<int>* w) {
 
 void WidgetRenderer::Visit(Collection* w) {
     if (!w->GetVisible()) return;
+    if (++collDepth == 0) {
+        if (!w->GetFocus()) alpha = 0.4;
+        else alpha = 1.0;
+    }
     if (w->GetBackground()) {
         //draw bg
         Vector<2,int> pos = w->GetPosition();
         Vector<2,int> dim = w->GetDimensions();
         glDisable(GL_TEXTURE_2D);
         glBegin(GL_QUADS);
-        glColor4f(0.7,0.7,.9,0.9);
+        float col[4];
+        bgColor.ToArray(col);
+        col[3] *= alpha;
+        glColor4fv(col);
         glVertex3f(pos[0], pos[1], -1.0);
         glVertex3f(pos[0], pos[1] + dim[1], -1.0);
         glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
@@ -190,8 +201,10 @@ void WidgetRenderer::Visit(Collection* w) {
         // border
         glEnable(GL_LINE_SMOOTH);
         glLineWidth(2.0);
+        activeColor.ToArray(col);
+        col[3] *= alpha;
         glBegin(GL_LINE_STRIP);
-        glColor4f(activeColor[0], activeColor[1], activeColor[2], activeColor[3]);
+        glColor4fv(col);
         glVertex3f(pos[0], pos[1], -1.0);
         glVertex3f(pos[0], pos[1] + dim[1], -1.0);
         glVertex3f(pos[0] + dim[0], pos[1] + dim[1], -1.0);
@@ -206,7 +219,7 @@ void WidgetRenderer::Visit(Collection* w) {
          i++) {
         (*i)->Accept(*this);
     }
-    --coll_depth;
+    --collDepth;
 }
 
 
@@ -220,10 +233,10 @@ WidgetRenderer::Initializer::Initializer(TextureLoader& texloader,
     , val_map(val_map) 
 {
     largefont = ResourceManager<IFontResource>::Create("Fonts/FreeSerif.ttf");
-    largefont->SetSize(20);
+    largefont->SetSize(16);
     largefont->Load();
     smallfont = ResourceManager<IFontResource>::Create("Fonts/FreeSerif.ttf");
-    smallfont->SetSize(14);
+    smallfont->SetSize(12);
     smallfont->SetStyle(FONT_STYLE_BOLD);
     smallfont->Load();
 }
