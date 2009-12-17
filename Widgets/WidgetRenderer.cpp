@@ -104,6 +104,7 @@ void WidgetRenderer::Visit(Button* w) {
 }
 
 void WidgetRenderer::Visit(Slider* w) {
+    ITextureResourcePtr text = text_map[w]; 
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim = w->GetDimensions();
     
@@ -123,6 +124,8 @@ void WidgetRenderer::Visit(Slider* w) {
     RenderQuad(sliderTex, pos[0], pos[1], dim[0], dim[1], col);
     //draw knob
     RenderQuad(sliderTex, knob_pos[0], knob_pos[1], knob_width, knob_height, col);
+    //draw knob
+    RenderQuad(text, pos[0], pos[1] + dim[1] * 0.5, text->GetWidth(), text->GetHeight(), col);
 }
 
 void WidgetRenderer::RenderCircularSlider(IWidget* w, float angle, float sweep) {

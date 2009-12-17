@@ -93,8 +93,8 @@ public:
     }                                                                   \
       };                                                                \
       CircularSlider<vtype>* w = new CircularSlider<vtype>(obj->getfunc(),step); \
-      w->SetText(#name);                                                \
-      w->SetDimensions(Vector<2,int>(40,40));                           \
+      w->SetText(name);                                                 \
+      w->SetDimensions(Vector<2,int>(35,35));                           \
       _mutator_class* m = new _mutator_class(obj, w);                   \
       mutators.AddMutator(m);                                           \
       AddWidget(w);                                                     \
@@ -122,7 +122,7 @@ public:
      };                                                                 \
      Slider* w = new Slider();                                          \
      w->SetValue(obj->getfunc()/float(highfunc(high)-lowfunc(low)));    \
-     w->SetText(#fname);                                                \
+     w->SetText(fname);                                                 \
      w->SetDimensions(Vector<2,int>(100,10));                           \
      _mutator_class* m = new _mutator_class(obj, w);                    \
      this->AddWidget(w); \
@@ -146,7 +146,7 @@ public:
         w->SetPadding(Vector<4,int>(4));                                \
         Button* c = new Button();                                       \
         c->SetActive(obj->getfunc());                                   \
-        c->SetText(#fname);                                             \
+        c->SetText(fname);                                              \
         c->SetDimensions(Vector<2,int>(40,40));                         \
         c->ActiveChangedEvent().Attach(*m);                             \
         w->AddWidget(c);                                                \
@@ -167,7 +167,7 @@ public:
         w->SetPadding(Vector<4,int>(4));                                \
         _mutator_class* m = new _mutator_class(obj);                    \
         Button* c = new Button();                                       \
-        c->SetText(#fname);                                             \
+        c->SetText(fname);                                              \
         c->ActiveChangedEvent().Attach(*m);                             \
         w->AddWidget(c);                                                \
         AddWidget(w);                                                   \

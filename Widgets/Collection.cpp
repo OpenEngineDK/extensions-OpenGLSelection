@@ -93,15 +93,15 @@ IWidget* Collection::FocusAt(int x, int y) {
         SetFocus(true);
     }
     else { 
-        // assume that no widget has focus if collection does not has focus.
         SetFocus(false);
         for (list<IWidget*>::iterator itr = widgets.begin(); 
              itr != widgets.end();
              itr++) {
-            (*itr)->SetFocus(false);
+            (*itr)->FocusAt(x,y);
         }
+        // assume that no widget has focus if collection does not has focus.
         return NULL;
-    } 
+    }
     focusWidget = NULL;
     for (list<IWidget*>::iterator itr = widgets.begin(); 
          itr != widgets.end();
@@ -110,8 +110,8 @@ IWidget* Collection::FocusAt(int x, int y) {
         if (w) focusWidget = w;
     }
     if (focusWidget) {
-            return focusWidget;
-        }
+        return focusWidget;
+    }
     return this;
 }
 
