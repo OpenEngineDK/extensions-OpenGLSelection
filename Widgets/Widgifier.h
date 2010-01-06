@@ -61,20 +61,20 @@ public:
     }
 };
 
-#define WIDGET_START(objtype)                               \
-  class objtype##Widget : public Widgets::Collection {      \
+#define WIDGET_START(objtype, cname)                        \
+  class cname : public Widgets::Collection {                \
   private:                                                  \
     typedef objtype thetype;                                \
     thetype* obj;                                           \
     Mutators<thetype> mutators;                             \
   public:                                                   \
-    virtual ~objtype##Widget() {}                           \
+    virtual ~cname() {}                           \
     void SetObject(thetype* obj) {                          \
         this->obj = obj;                                    \
         mutators.SetObject(obj);                            \
     }                                                       \
     thetype* GetObject() { return obj; }                    \
-    objtype##Widget(thetype* obj): obj(obj) {
+    cname(thetype* obj): obj(obj) {
       
 #define WIDGET_CSLIDER(name, getfunc, setfunc, vtype, step)             \
 { class _mutator_class: public IListener<ValueChangedEventArg<vtype> >  \
@@ -129,6 +129,29 @@ public:
      mutators.AddMutator(m);\
     }
 
+#define WIDGET_COLLECTION_BEGIN(type)                                   \
+  {  class _custom_collection_class : public Collection {               \
+    private:                                                            \
+    Mutators<thetype>& mutators;                                        \
+    thetype* obj;                                                       \
+    public:                                                             \
+    virtual ~_custom_collection_class() {}                              \
+    _custom_collection_class(Mutators<thetype>& mutators, thetype* obj):\
+        Collection(type)                                                \
+        , mutators(mutators)                                            \
+        , obj(obj)                                                      \
+    {                                                                   \
+        
+#define WIDGET_COLLECTION_END()                                         \
+        }                                                               \
+    };                                                                  \
+        _custom_collection_class* w = new _custom_collection_class(mutators, obj); \
+        w->SetBackground(false);                                        \
+        w->SetFixed(true);                                              \
+        w->SetPadding(Vector<4,int>(0));                                \
+        this->AddWidget(w);                                             \
+  }
+
 #define WIDGET_BUTTON(fname, getfunc, setfunc, type)                    \
         type(fname, getfunc, setfunc)
 
@@ -143,7 +166,7 @@ public:
         Collection* w = new Collection(Collection::TOGGLE);             \
         w->SetBackground(false);                                         \
         w->SetFixed(true);                                              \
-        w->SetPadding(Vector<4,int>(4));                                \
+        w->SetPadding(Vector<4,int>(0));                                \
         Button* c = new Button();                                       \
         c->SetActive(obj->getfunc());                                   \
         c->SetText(fname);                                              \
@@ -164,7 +187,7 @@ public:
         Collection* w = new Collection(Collection::SIMPLE);             \
         w->SetBackground(false);                                         \
         w->SetFixed(true);                                              \
-        w->SetPadding(Vector<4,int>(4));                                \
+        w->SetPadding(Vector<4,int>(0));                                \
         _mutator_class* m = new _mutator_class(obj);                    \
         Button* c = new Button();                                       \
         c->SetText(fname);                                              \

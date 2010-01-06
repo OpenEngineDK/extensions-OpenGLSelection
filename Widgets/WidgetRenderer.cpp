@@ -183,7 +183,7 @@ void WidgetRenderer::Visit(CircularSlider<int>* w) {
 void WidgetRenderer::Visit(Collection* w) {
     if (!w->GetVisible()) return;
     if (++collDepth == 0) {
-        if (!w->GetFocus()) alpha = 0.4;
+        if (!w->GetFocus()) alpha = 0.7;
         else alpha = 1.0;
     }
     if (w->GetBackground()) {

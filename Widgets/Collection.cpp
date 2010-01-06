@@ -26,7 +26,7 @@ Collection::Collection()
     , fixed(false)
     , bg(true)
     , focusWidget(NULL)
-    , spacing(5)
+    , spacing(9)
     , padding(Vector<4,int>(10))
 {}
 

@@ -147,20 +147,23 @@ void MouseSelection::Handle(RenderingEventArg arg) {
         glDisable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
         // setup projection and view matrix 
-        Viewport& viewport = *activeViewport;
-        Vector<4,int> d = viewport.GetDimension();
-        glViewport((GLsizei)d[0], (GLsizei)d[1], (GLsizei)d[2], (GLsizei)d[3]);
-        arg.renderer.ApplyViewingVolume(*viewport.GetViewingVolume());
-
-        //render each tool bottom-up.
-        vtmap[activeViewport]->Render(*viewport.GetViewingVolume(), arg.renderer);
-        OrthogonalViewingVolume ortho(1.0f, 2.0f, 
-                                      /*left*/0.0, /*right*/d[2], 
-                                      /*top*/0.0, /*bottom*/d[3]);
-        arg.renderer.ApplyViewingVolume(ortho);
-        //render each ortho-tool bottom-up.
-        vtmap[activeViewport]->RenderOrtho(ortho, arg.renderer);
-
+        for (map<Display::Viewport*, ITool*>::iterator itr = vtmap.begin();
+             itr != vtmap.end();
+             ++itr) {
+            Viewport* viewport = (*itr).first;//*activeViewport;
+            Vector<4,int> d = viewport->GetDimension();
+            glViewport((GLsizei)d[0], (GLsizei)d[1], (GLsizei)d[2], (GLsizei)d[3]);
+            arg.renderer.ApplyViewingVolume(*viewport->GetViewingVolume());
+            
+            //render each tool bottom-up.
+            vtmap[viewport]->Render(*viewport->GetViewingVolume(), arg.renderer);
+            OrthogonalViewingVolume ortho(1.0f, 2.0f, 
+                                          /*left*/0.0, /*right*/d[2], 
+                                          /*top*/0.0, /*bottom*/d[3]);
+            arg.renderer.ApplyViewingVolume(ortho);
+            //render each ortho-tool bottom-up.
+            vtmap[viewport]->RenderOrtho(ortho, arg.renderer);
+        }   
         glPopAttrib();
         glPopAttrib();
         glPopAttrib();
