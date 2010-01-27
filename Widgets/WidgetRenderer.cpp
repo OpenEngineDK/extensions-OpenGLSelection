@@ -257,10 +257,10 @@ void WidgetRenderer::Initializer::Visit(CircularSlider<float>* w) {
     LookupText(w, smallfont);
     IFontTextureResourcePtr val  = val_map[w];
     if (val == NULL) {
-        val = smallfont->CreateFontTexture();
+        val = smallfont->CreateFontTexture(100,10);
         char s[10];
         sprintf(s, "%.1f", w->GetValue());
-        val->SetText(s);
+        //val->SetText(s);
         texloader.Load(val, TextureLoader::RELOAD_IMMEDIATE);
         val_map[w] = val;
     }
@@ -271,10 +271,10 @@ void WidgetRenderer::Initializer::Visit(CircularSlider<int>* w) {
     LookupText(w, smallfont);
     IFontTextureResourcePtr val  = val_map[w];
     if (val == NULL) {
-        val = smallfont->CreateFontTexture();
+        val = smallfont->CreateFontTexture(100,10);
         char s[10];
         sprintf(s, "%d", w->GetValue());
-        val->SetText(s);
+        //val->SetText(s);
         texloader.Load(val, TextureLoader::RELOAD_IMMEDIATE);
         val_map[w] = val;
     }
@@ -293,9 +293,9 @@ ITextureResourcePtr WidgetRenderer::Initializer::LookupText(IWidget* w, IFontRes
     w->TextChangedEvent().Attach(*this);
     IFontTextureResourcePtr texr = text_map[w];
     if (texr == NULL) {
-        texr = font->CreateFontTexture();
+        texr = font->CreateFontTexture(100,10);
         text_map[w] = texr;
-        texr->SetText(w->GetText());
+        //texr->SetText(w->GetText());
         w->SetTextDimensions(Vector<2,int>(texr->GetWidth(),texr->GetHeight()));        
         texloader.Load(texr, TextureLoader::RELOAD_IMMEDIATE);
     }
@@ -305,7 +305,7 @@ ITextureResourcePtr WidgetRenderer::Initializer::LookupText(IWidget* w, IFontRes
 void WidgetRenderer::Initializer::Handle(TextChangedEventArg e) {
     IFontTextureResourcePtr texr = text_map[e.widget];
     if (texr != NULL) {
-        texr->SetText(e.text);
+        //texr->SetText(e.text);
         e.widget->SetTextDimensions(Vector<2,int>(texr->GetWidth(),texr->GetHeight()));
     }
 }
@@ -315,7 +315,7 @@ void WidgetRenderer::Initializer::Handle(ValueChangedEventArg<float> e) {
     if (texr == NULL) return;
     char s[10];
     snprintf(s, 10, "%.1f", e.value);
-    texr->SetText(s);
+    //texr->SetText(s);
 }
 
 void WidgetRenderer::Initializer::Handle(ValueChangedEventArg<int> e) {
@@ -323,7 +323,7 @@ void WidgetRenderer::Initializer::Handle(ValueChangedEventArg<int> e) {
     if (texr == NULL) return;
     char s[10];
     snprintf(s, 10, "%d", e.value);
-    texr->SetText(s);
+    //texr->SetText(s);
 }
 
 } // NS Utils
