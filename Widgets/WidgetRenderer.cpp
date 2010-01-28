@@ -308,7 +308,7 @@ FTPair* WidgetRenderer::Initializer::RenderText(string s, IFontResourcePtr font,
         IFontTextureResourcePtr texr = font->CreateFontTexture(dim[0],dim[1]);    
         p = new FTPair(texr, font);
     }
-    p->tex->Clear(Vector<4,float> (1,1,1,1));
+    p->tex->Clear(Vector<4,float> (1,1,1,0));
     font->RenderText(s, p->tex, 0, 0);
     return p;
 }
