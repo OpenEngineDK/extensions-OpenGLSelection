@@ -87,7 +87,7 @@ void WidgetRenderer::RenderQuad(ITextureResourcePtr texr,
 }
 
 void WidgetRenderer::Visit(Button* w) {
-    ITextureResourcePtr text = text_map[w];
+    ITextureResourcePtr text = text_map[w]->tex;
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim(text->GetWidth(), text->GetHeight());
     float col[4];
@@ -104,7 +104,7 @@ void WidgetRenderer::Visit(Button* w) {
 }
 
 void WidgetRenderer::Visit(Slider* w) {
-    ITextureResourcePtr text = text_map[w]; 
+    ITextureResourcePtr text = text_map[w]->tex; 
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim = w->GetDimensions();
     
@@ -129,8 +129,8 @@ void WidgetRenderer::Visit(Slider* w) {
 }
 
 void WidgetRenderer::RenderCircularSlider(IWidget* w, float angle, float sweep) {
-    ITextureResourcePtr text = text_map[w]; 
-    IFontTextureResourcePtr val  = val_map[w];
+    ITextureResourcePtr text = text_map[w]->tex; 
+    IFontTextureResourcePtr val  = val_map[w]->tex;
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim = w->GetDimensions();
     pos += Vector<2,int>(0.5 * dim[0], 0.5 * dim[1]);
@@ -229,8 +229,8 @@ void WidgetRenderer::Visit(Collection* w) {
 // initializer
 
 WidgetRenderer::Initializer::Initializer(TextureLoader& texloader,
-                                         map<IWidget*,IFontTextureResourcePtr>& text_map,
-                                         map<IWidget*, IFontTextureResourcePtr>& val_map)
+                                         map<IWidget*,FTPair*>& text_map,
+                                         map<IWidget*,FTPair*>& val_map)
     : texloader(texloader)
     , text_map(text_map)
     , val_map(val_map) 
@@ -245,39 +245,47 @@ WidgetRenderer::Initializer::Initializer(TextureLoader& texloader,
 }
 
 void WidgetRenderer::Initializer::Visit(Button* w) {
-    LookupText(w, largefont);
-}
+    w->TextChangedEvent().Attach(*this);
+    FTPair* pt = RenderText(w->GetText(), largefont, text_map[w]);
+    text_map[w] = pt;
+    texloader.Load(pt->tex, TextureLoader::RELOAD_IMMEDIATE);
+    w->SetTextDimensions(Vector<2,int>(pt->tex->GetWidth(),pt->tex->GetHeight()));        
+ }
 
 void WidgetRenderer::Initializer::Visit(Slider* w) {
-    LookupText(w, smallfont);
+    w->TextChangedEvent().Attach(*this);
+    FTPair* pt = RenderText(w->GetText(), smallfont, text_map[w]);
+    text_map[w] = pt;
+    texloader.Load(pt->tex, TextureLoader::RELOAD_IMMEDIATE);
+    w->SetTextDimensions(Vector<2,int>(pt->tex->GetWidth(),pt->tex->GetHeight()));        
 }
 
 void WidgetRenderer::Initializer::Visit(CircularSlider<float>* w) {
     w->ValueChangedEvent().Attach(*this);
-    LookupText(w, smallfont);
-    IFontTextureResourcePtr val  = val_map[w];
-    if (val == NULL) {
-        val = smallfont->CreateFontTexture(100,10);
-        char s[10];
-        sprintf(s, "%.1f", w->GetValue());
-        //val->SetText(s);
-        texloader.Load(val, TextureLoader::RELOAD_IMMEDIATE);
-        val_map[w] = val;
-    }
+    w->TextChangedEvent().Attach(*this);
+    FTPair* pt = RenderText(w->GetText(), smallfont, text_map[w]);
+    text_map[w] = pt;
+    char s[10];
+    sprintf(s, "%.1f", w->GetValue());
+    FTPair* pv = RenderText(string(s), smallfont, val_map[w]);
+    val_map[w] = pv;
+    texloader.Load(pt->tex, TextureLoader::RELOAD_IMMEDIATE);
+    texloader.Load(pv->tex, TextureLoader::RELOAD_IMMEDIATE);
+    w->SetTextDimensions(Vector<2,int>(pt->tex->GetWidth(),pt->tex->GetHeight()));        
 }
 
 void WidgetRenderer::Initializer::Visit(CircularSlider<int>* w) {
     w->ValueChangedEvent().Attach(*this);
-    LookupText(w, smallfont);
-    IFontTextureResourcePtr val  = val_map[w];
-    if (val == NULL) {
-        val = smallfont->CreateFontTexture(100,10);
-        char s[10];
-        sprintf(s, "%d", w->GetValue());
-        //val->SetText(s);
-        texloader.Load(val, TextureLoader::RELOAD_IMMEDIATE);
-        val_map[w] = val;
-    }
+    w->TextChangedEvent().Attach(*this);
+    FTPair* pt = RenderText(w->GetText(), smallfont, text_map[w]);
+    text_map[w] = pt;
+    char s[10];
+    sprintf(s, "%d", w->GetValue());
+    FTPair* pv = RenderText(string(s), smallfont, val_map[w]);
+    val_map[w] = pv;
+    texloader.Load(pt->tex, TextureLoader::RELOAD_IMMEDIATE);
+    texloader.Load(pv->tex, TextureLoader::RELOAD_IMMEDIATE);
+    w->SetTextDimensions(Vector<2,int>(pt->tex->GetWidth(),pt->tex->GetHeight()));        
 }
 
 void WidgetRenderer::Initializer::Visit(Collection* w) {
@@ -289,41 +297,53 @@ void WidgetRenderer::Initializer::Visit(Collection* w) {
     }
 }
 
-ITextureResourcePtr WidgetRenderer::Initializer::LookupText(IWidget* w, IFontResourcePtr font) {
-    w->TextChangedEvent().Attach(*this);
-    IFontTextureResourcePtr texr = text_map[w];
-    if (texr == NULL) {
-        texr = font->CreateFontTexture(100,10);
-        text_map[w] = texr;
-        //texr->SetText(w->GetText());
-        w->SetTextDimensions(Vector<2,int>(texr->GetWidth(),texr->GetHeight()));        
-        texloader.Load(texr, TextureLoader::RELOAD_IMMEDIATE);
+FTPair* WidgetRenderer::Initializer::RenderText(string s, IFontResourcePtr font, FTPair* ftp) {
+    FTPair* p;
+    if (ftp) {
+        p = ftp;
+        
     }
-    return texr;
+    else {
+        Vector<2,int> dim = font->TextDim(s);
+        IFontTextureResourcePtr texr = font->CreateFontTexture(dim[0],dim[1]);    
+        p = new FTPair(texr, font);
+    }
+    p->tex->Clear(Vector<4,float> (1,1,1,1));
+    font->RenderText(s, p->tex, 0, 0);
+    return p;
+}
+
+ITextureResourcePtr WidgetRenderer::Initializer::LookupText(IWidget* w) {
+    FTPair* p = text_map[w];
+    if (p == NULL) {
+        w->Accept(*this);
+    }
+    p = text_map[w];
+    return p->tex;
 }
 
 void WidgetRenderer::Initializer::Handle(TextChangedEventArg e) {
-    IFontTextureResourcePtr texr = text_map[e.widget];
-    if (texr != NULL) {
-        //texr->SetText(e.text);
-        e.widget->SetTextDimensions(Vector<2,int>(texr->GetWidth(),texr->GetHeight()));
+    FTPair* p = text_map[e.widget];
+    if (!p) {
+        RenderText(e.text, p->font, p);
+        e.widget->SetTextDimensions(Vector<2,int>(p->tex->GetWidth(),p->tex->GetHeight()));
     }
 }
 
 void WidgetRenderer::Initializer::Handle(ValueChangedEventArg<float> e) {
-    IFontTextureResourcePtr texr = val_map[e.widget];
-    if (texr == NULL) return;
+    FTPair* p = val_map[e.widget];
+    if (!p) return;
     char s[10];
     snprintf(s, 10, "%.1f", e.value);
-    //texr->SetText(s);
+    RenderText(string(s), p->font, p);
 }
 
 void WidgetRenderer::Initializer::Handle(ValueChangedEventArg<int> e) {
-    IFontTextureResourcePtr texr = val_map[e.widget];
-    if (texr == NULL) return;
+    FTPair* p = val_map[e.widget];
+    if (!p) return;
     char s[10];
     snprintf(s, 10, "%d", e.value);
-    //texr->SetText(s);
+    RenderText(string(s), p->font, p);
 }
 
 } // NS Utils

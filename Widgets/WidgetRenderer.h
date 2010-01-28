@@ -40,6 +40,16 @@ class Slider;
 class Collection;
 template <class T>
 class CircularSlider;
+
+    class FTPair {
+    public: 
+        IFontTextureResourcePtr tex;
+        IFontResourcePtr font;
+        FTPair( IFontTextureResourcePtr tex,
+                IFontResourcePtr font): tex(tex), font(font) {}
+        virtual ~FTPair() {}
+    };
+
 /**
  * On Screen Display OpenGL Renderer Class.
  *
@@ -47,6 +57,7 @@ class CircularSlider;
  */
 class WidgetRenderer: public IWidgetRenderer {
 private:
+
     class Initializer
         : public IWidgetRenderer
         , IListener<TextChangedEventArg>
@@ -56,13 +67,14 @@ private:
         TextureLoader& texloader;
         IFontResourcePtr largefont;
         IFontResourcePtr smallfont;
-        map<IWidget*, IFontTextureResourcePtr>& text_map;
-        map<IWidget*, IFontTextureResourcePtr>& val_map;
-        inline ITextureResourcePtr LookupText(IWidget* w, IFontResourcePtr font);
+        map<IWidget*, FTPair*>& text_map;
+        map<IWidget*, FTPair*>& val_map;
+        inline ITextureResourcePtr LookupText(IWidget* w);
+        inline FTPair* RenderText(string s, IFontResourcePtr font, FTPair* ftp);
     public:
         Initializer(TextureLoader& texloader,         
-                    map<IWidget*,IFontTextureResourcePtr>& text_map,
-                    map<IWidget*, IFontTextureResourcePtr>& val_map);
+                    map<IWidget*, FTPair*>& text_map,
+                    map<IWidget*, FTPair*>& val_map);
         void Visit(Button* w);
         void Visit(Slider* w);
         void Visit(CircularSlider<float>* w);
@@ -75,8 +87,8 @@ private:
 
     list<IWidget*> widgets;
     //maps to hold widget font textures
-    map<IWidget*, IFontTextureResourcePtr> text_map;
-    map<IWidget*, IFontTextureResourcePtr> val_map;
+    map<IWidget*, FTPair*> text_map;
+    map<IWidget*, FTPair*> val_map;
     ITextureResourcePtr sliderTex;
     Math::Vector<4,float> activeColor, inactiveColor, bgColor;
     float alpha;
