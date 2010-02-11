@@ -33,8 +33,10 @@ private:
     float step;
     Math::Vector<3,float> init_p;
     Math::Quaternion<float> init_q;
+    bool meta;
 public:
     CameraTool();
+    CameraTool(bool meta);
     bool Handle(PointingDevice::MovedEventArg arg);
     bool Handle(PointingDevice::PressedEventArg arg);
     bool Handle(PointingDevice::ReleasedEventArg arg);

@@ -20,7 +20,9 @@ using namespace Display;
 using namespace Renderers;
 using namespace Math;
 
-CameraTool::CameraTool(): m_x(-1), m_y(-1), step(1.5)  {}
+CameraTool::CameraTool(): m_x(-1), m_y(-1), step(1.5), meta(true)  {}
+
+CameraTool::CameraTool(bool meta): m_x(-1), m_y(-1), step(1.5), meta(meta)  {}
 
 bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
     if (m_x == -1) return false;
@@ -54,7 +56,7 @@ bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
 }
 
 bool CameraTool::Handle(PointingDevice::PressedEventArg arg) {
-    if (!(arg.state.shifts & 0x1)) 
+    if (!(arg.state.shifts & 0x1) && meta) 
         return false;
     if (arg.btn & 0x7) {
         IViewingVolume& vv = *arg.vp.GetViewingVolume();
