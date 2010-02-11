@@ -32,12 +32,7 @@
 
 #include <Renderers/OpenGL/Renderer.h>
 #include <Renderers/TextureLoader.h>
-#include <Logging/Logger.h>
-
-//font test
-#include <Resources/SDLFont.h>
-#include <Resources/IFontResource.h>
-#include <Resources/IFontTextureResource.h>
+// #include <Logging/Logger.h>
 
 namespace OpenEngine {
 namespace Utils {
