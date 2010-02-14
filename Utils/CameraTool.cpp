@@ -38,14 +38,14 @@ bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
                        + init_q.RotateVector(cam_y) * dy * step);
         return true;
     }
-    if (arg.state.btns & 0x2) {
+    if (arg.state.btns & 0x4) {
         Vector<3,float> cam_x(1.0f,0.0f,0.0f);
         Vector<3,float> cam_z(0.0f,0.0f,-1.0f);
         vv.SetPosition(init_p + init_q.RotateVector(cam_x) * dx * step 
                        + init_q.RotateVector(cam_z) * dy * step);
         return true;
     }
-    if (arg.state.btns & 0x4) { 
+    if (arg.state.btns & 0x2) { 
         Quaternion<float> cam_x(dy*0.01, init_q.RotateVector(Vector<3,float>(1.0f,0.0f,0.0f)));
         Quaternion<float> cam_y(dx*0.01, Vector<3,float>(0.0f,-1.0f,0.0f));
         Quaternion<float> cam_rot = cam_y * cam_x;
@@ -70,7 +70,7 @@ bool CameraTool::Handle(PointingDevice::PressedEventArg arg) {
         IViewingVolume& vv = *arg.vp.GetViewingVolume();
         Quaternion<float> q = vv.GetDirection();
         Vector<3,float> forward(0.0f,0.0f,1.0f);
-        float step = this->step * 2;
+        float step = this->step * 10;
         if (arg.btn == 0x8) 
             step *= -1;
         vv.SetPosition(vv.GetPosition() + q.RotateVector(forward)*step);
