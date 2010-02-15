@@ -35,7 +35,7 @@ WidgetRenderer::WidgetRenderer(TextureLoader& texloader)
     , alpha(1.0)
     , collDepth(-1)
 {
-    sliderTex = ResourceManager<ITextureResource>::Create("slider_bg.png");
+    sliderTex = ResourceManager<ITexture2D>::Create("slider_bg.png");
     texloader.Load(sliderTex);
 }
 
@@ -63,7 +63,7 @@ void WidgetRenderer::RenderWidgets() {
     glPopAttrib();
 }
 
-void WidgetRenderer::RenderQuad(ITextureResourcePtr texr, 
+void WidgetRenderer::RenderQuad(ITexture2DPtr texr, 
                                 float x, 
                                 float y, 
                                 float width, 
@@ -87,7 +87,7 @@ void WidgetRenderer::RenderQuad(ITextureResourcePtr texr,
 }
 
 void WidgetRenderer::Visit(Button* w) {
-    ITextureResourcePtr text = text_map[w]->tex;
+    ITexture2DPtr text = text_map[w]->tex;
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim(text->GetWidth(), text->GetHeight());
     float col[4];
@@ -104,7 +104,7 @@ void WidgetRenderer::Visit(Button* w) {
 }
 
 void WidgetRenderer::Visit(Slider* w) {
-    ITextureResourcePtr text = text_map[w]->tex; 
+    ITexture2DPtr text = text_map[w]->tex; 
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim = w->GetDimensions();
     
@@ -129,7 +129,7 @@ void WidgetRenderer::Visit(Slider* w) {
 }
 
 void WidgetRenderer::RenderCircularSlider(IWidget* w, float angle, float sweep) {
-    ITextureResourcePtr text = text_map[w]->tex; 
+    ITexture2DPtr text = text_map[w]->tex; 
     IFontTextureResourcePtr val  = val_map[w]->tex;
     Vector<2,int> pos = w->GetPosition();
     Vector<2,int> dim = w->GetDimensions();
@@ -313,7 +313,7 @@ FTPair* WidgetRenderer::Initializer::RenderText(string s, IFontResourcePtr font,
     return p;
 }
 
-ITextureResourcePtr WidgetRenderer::Initializer::LookupText(IWidget* w) {
+ITexture2DPtr WidgetRenderer::Initializer::LookupText(IWidget* w) {
     FTPair* p = text_map[w];
     if (p == NULL) {
         w->Accept(*this);

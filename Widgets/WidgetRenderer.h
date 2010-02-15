@@ -13,7 +13,7 @@
 #include <Widgets/IWidget.h>
 #include <Widgets/ValueWidget.h>
 #include <Widgets/IWidgetRenderer.h>
-#include <Resources/ITextureResource.h>
+#include <Resources/ITexture2D.h>
 #include <Resources/IFontTextureResource.h>
 #include <Resources/IFontResource.h>
 #include <Math/Vector.h>
@@ -30,7 +30,7 @@ namespace Widgets {
 using Core::IListener;
 using Resources::IFontTextureResourcePtr;
 using Resources::IFontResourcePtr;
-using Resources::ITextureResourcePtr;
+using Resources::ITexture2DPtr;
 using Renderers::TextureLoader;
 using std::map;
 using std::list;
@@ -69,7 +69,7 @@ private:
         IFontResourcePtr smallfont;
         map<IWidget*, FTPair*>& text_map;
         map<IWidget*, FTPair*>& val_map;
-        inline ITextureResourcePtr LookupText(IWidget* w);
+        inline ITexture2DPtr LookupText(IWidget* w);
         inline FTPair* RenderText(string s, IFontResourcePtr font, FTPair* ftp);
     public:
         Initializer(TextureLoader& texloader,         
@@ -89,11 +89,11 @@ private:
     //maps to hold widget font textures
     map<IWidget*, FTPair*> text_map;
     map<IWidget*, FTPair*> val_map;
-    ITextureResourcePtr sliderTex;
+    ITexture2DPtr sliderTex;
     Math::Vector<4,float> activeColor, inactiveColor, bgColor;
     float alpha;
     int collDepth;
-    inline void RenderQuad(ITextureResourcePtr texr, float x, float y, float width, float height, float* col);
+    inline void RenderQuad(ITexture2DPtr texr, float x, float y, float width, float height, float* col);
     void RenderCircularSlider(IWidget* w, float angle, float sweep);
 public:
     WidgetRenderer(Renderers::TextureLoader& texloader);
