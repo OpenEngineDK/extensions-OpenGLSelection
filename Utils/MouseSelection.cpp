@@ -9,15 +9,11 @@
 
 #include <Utils/MouseSelection.h>
 
-#include <Display/IFrame.h>
 #include <Display/Viewport.h>
 #include <Display/OrthogonalViewingVolume.h>
+#include <Display/IRenderCanvas.h>
 #include <Scene/ISceneNode.h>
-#include <Utils/GLSceneSelection.h>
-#include <Utils/SelectionTool.h>
-#include <Utils/TransformationTool.h>
-#include <Utils/CameraTool.h>
-
+#include <Meta/OpenGL.h>
 #include <Logging/Logger.h>
 
 namespace OpenEngine {
@@ -29,64 +25,48 @@ using namespace Renderers;
 using namespace Scene;
 using namespace std;
 
-MouseSelection::MouseSelection (IFrame& frame, 
-                                IMouse& mouse, 
-                                ISceneNode* root)
-    : frame(frame) 
-    , mouse(mouse)
-    , scenesel(new GLSceneSelection(frame))
+MouseSelection::MouseSelection (IMouse& mouse,
+                                IKeyboard& keyboard)
+    : mouse(mouse)
     , pd(new PointingDevice())
-    , root (root)
-    , activeViewport(NULL)
+    , activeCanvas(NULL)
 {
-}
-
-MouseSelection::MouseSelection (IFrame& frame, 
-                                IMouse& mouse, 
-                                ISceneNode* root,
-                                ISceneSelection* ss
-                                )
-    : frame(frame) 
-    , mouse(mouse)
-    , scenesel(ss)
-    , pd(new PointingDevice())
-    , root (root)
-    , activeViewport(NULL)
-{
+    mouse.MouseMovedEvent().Attach(*this);
+    mouse.MouseButtonEvent().Attach(*this);
+    keyboard.KeyEvent().Attach(*this);
 }
 
 MouseSelection::~MouseSelection() {
     delete pd;
-    delete scenesel;
 }
 
 void MouseSelection::Handle(MouseMovedEventArg arg) {
     // find the active viewport
-    if (activeViewport == NULL || !IsViewportActive(activeViewport, arg.x, arg.y)) {
-        // dont find new viewport if buttons are pressed
+    if (activeCanvas == NULL || !IsCanvasActive(activeCanvas, arg.x, arg.y)) {
+        // dont find new canvas if buttons are pressed
         if (pd->state.btns) return; 
-        activeViewport = NULL;
-        for (map<Viewport*,ITool*>::iterator itr = vtmap.begin();
+        activeCanvas = NULL;
+        for (map<IRenderCanvas*,ITool*>::iterator itr = vtmap.begin();
              itr != vtmap.end();
              itr++) {
-            if (IsViewportActive((*itr).first, arg.x, arg.y)) {
-                activeViewport = (*itr).first;
+            if (IsCanvasActive((*itr).first, arg.x, arg.y)) {
+                activeCanvas = (*itr).first;
                 break;
             }
         }
     }
-    if (!activeViewport) return;
-    Vector<4,int> d = activeViewport->GetDimension();
-    pd->state.x = arg.x-d[0];
-    pd->state.y = (d[3]+d[1])-(frame.GetHeight()-arg.y); 
-    PointingDevice::MovedEventArg e(arg.dx, arg.dy, *scenesel, root, *pd, *activeViewport);
-    vtmap[activeViewport]->Handle(e);
+    if (!activeCanvas) return;
+    Vector<2,int> pos = activeCanvas->GetPosition();
+    pd->state.x = arg.x - pos[0];
+    pd->state.y = arg.y - pos[1]; 
+    PointingDevice::MovedEventArg e(arg.dx, arg.dy, *pd, *activeCanvas);
+    vtmap[activeCanvas]->Handle(e);
 }
 
 void MouseSelection::Handle(MouseButtonEventArg arg) {
-    if (!activeViewport) return;
+    if (!activeCanvas) return;
     if (arg.type == EVENT_PRESS) {
-        PointingDevice::PressedEventArg e(0, *scenesel, root, *pd, *activeViewport);
+        PointingDevice::PressedEventArg e(0, *pd, *activeCanvas);
         if (arg.button & BUTTON_LEFT) {
             pd->state.btns |= 0x1;
             e.btn = 0x1;
@@ -105,10 +85,10 @@ void MouseSelection::Handle(MouseButtonEventArg arg) {
         if (arg.button & BUTTON_WHEEL_DOWN) {
             e.btn = 0x10;
         }
-        vtmap[activeViewport]->Handle(e);
+        vtmap[activeCanvas]->Handle(e);
     }
     if (arg.type == EVENT_RELEASE) {
-        PointingDevice::ReleasedEventArg e(0, *scenesel, root, *pd, *activeViewport);
+        PointingDevice::ReleasedEventArg e(0, *pd, *activeCanvas);
         if (arg.button & BUTTON_LEFT) {
             pd->state.btns ^= 0x1;
             e.btn = 0x1;
@@ -121,7 +101,7 @@ void MouseSelection::Handle(MouseButtonEventArg arg) {
             pd->state.btns ^= 0x4;
             e.btn = 0x4;
         }
-        vtmap[activeViewport]->Handle(e);
+        vtmap[activeCanvas]->Handle(e);
     }
 }
 
@@ -138,7 +118,7 @@ void MouseSelection::Handle(KeyboardEventArg arg) {
 
 void MouseSelection::Handle(RenderingEventArg arg) {
     // for each viewport
-    if (activeViewport != NULL) {
+    if (activeCanvas != NULL) {
         glPushAttrib(GL_LIGHTING_BIT);
         glPushAttrib(GL_ENABLE_BIT);
         glPushAttrib(GL_DEPTH_BUFFER_BIT);
@@ -146,24 +126,30 @@ void MouseSelection::Handle(RenderingEventArg arg) {
         glDisable(GL_LIGHTING);
         glDisable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
+        if (activeCanvas) {
+            IRenderCanvas* rc = &arg.canvas;//*activeCanvas;
+            // logger.info << "acc: " << activeCanvas << logger.end;;
+            // logger.info << "argc: " << rc << logger.end;;
+            if ( rc == activeCanvas) {
+                logger.info << "hit canvas: " << activeCanvas << logger.end;;
+            }            
+        }
+
+
         // setup projection and view matrix 
-        for (map<Display::Viewport*, ITool*>::iterator itr = vtmap.begin();
-             itr != vtmap.end();
-             ++itr) {
-            Viewport* viewport = (*itr).first;//*activeViewport;
-            Vector<4,int> d = viewport->GetDimension();
-            glViewport((GLsizei)d[0], (GLsizei)d[1], (GLsizei)d[2], (GLsizei)d[3]);
-            arg.renderer.ApplyViewingVolume(*viewport->GetViewingVolume());
-            
+        // for (map<IRenderCanvas*, ITool*>::iterator itr = vtmap.begin();
+        //      itr != vtmap.end();
+        //      ++itr) {
+        //     IRenderCanvas* canvas = (*itr).first;            
             //render each tool bottom-up.
-            vtmap[viewport]->Render(*viewport->GetViewingVolume(), arg.renderer);
-            OrthogonalViewingVolume ortho(1.0f, 2.0f, 
-                                          /*left*/0.0, /*right*/d[2], 
-                                          /*top*/0.0, /*bottom*/d[3]);
-            arg.renderer.ApplyViewingVolume(ortho);
+            // vtmap[arg.canvas]->Render(canvas->GetViewingVolume(), arg.renderer);
+            // OrthogonalViewingVolume ortho(1.0f, 2.0f, 
+            //                               0.0, arg.canvas->GetWidth(), 
+            //                               0.0, arg.canvas->GetHeight());
+            // arg.renderer.ApplyViewingVolume(ortho);
             //render each ortho-tool bottom-up.
-            vtmap[viewport]->RenderOrtho(ortho, arg.renderer);
-        }   
+            // vtmap[canvas]->RenderOrtho(ortho, arg.renderer);
+        // }   
         glPopAttrib();
         glPopAttrib();
         glPopAttrib();
@@ -171,21 +157,17 @@ void MouseSelection::Handle(RenderingEventArg arg) {
     }
 }
 
-bool MouseSelection::IsViewportActive(Viewport* viewport, int x, int y) {
-    Vector<4,int> dim = viewport->GetDimension();
-    int fheight = frame.GetHeight();
-    if (x >= dim[0] && x <= dim[0] + dim[2] && fheight-y >= dim[1] && fheight-y <= dim[1]+dim[3]) {
+bool MouseSelection::IsCanvasActive(IRenderCanvas* canvas, int x, int y) {
+    Vector<2,int> pos = canvas->GetPosition();
+    Vector<4,int> dim(pos[0], pos[1], canvas->GetWidth(), canvas->GetHeight());
+    if (x >= dim[0] && x <= dim[0] + dim[2] && y >= dim[1] && y <= dim[1]+dim[3]) {
         return true;
     }
     return false;
 }
 
-void MouseSelection::BindTool(Viewport* vp, ITool* t) {
-    vtmap[vp] = t;
-}
-
-void MouseSelection::SetScene(ISceneNode* scene) {
-    this->root = scene;
+void MouseSelection::BindTool(IRenderCanvas* canvas, ITool* tool) {
+    vtmap[canvas] = tool;
 }
 
 } // NS Utils

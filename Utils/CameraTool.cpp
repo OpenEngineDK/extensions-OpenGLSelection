@@ -28,7 +28,7 @@ bool CameraTool::Handle(PointingDevice::MovedEventArg arg) {
     if (m_x == -1) return false;
     if (!(arg.state.btns & 0x7))
         return false;
-    IViewingVolume& vv = *arg.vp.GetViewingVolume();
+    IViewingVolume& vv = *arg.canvas.GetViewingVolume();
     int dx = arg.state.x - m_x;
     int dy = arg.state.y - m_y;
     if (arg.state.btns & 0x1) {
@@ -59,7 +59,7 @@ bool CameraTool::Handle(PointingDevice::PressedEventArg arg) {
     if (!(arg.state.shifts & 0x1) && meta) 
         return false;
     if (arg.btn & 0x7) {
-        IViewingVolume& vv = *arg.vp.GetViewingVolume();
+        IViewingVolume& vv = *arg.canvas.GetViewingVolume();
         init_q = vv.GetDirection();
         init_p = vv.GetPosition();
         m_x = arg.state.x;
@@ -67,7 +67,7 @@ bool CameraTool::Handle(PointingDevice::PressedEventArg arg) {
         return true;
     }
     if ((arg.btn == 0x8) || (arg.btn == 16)) {
-        IViewingVolume& vv = *arg.vp.GetViewingVolume();
+        IViewingVolume& vv = *arg.canvas.GetViewingVolume();
         Quaternion<float> q = vv.GetDirection();
         Vector<3,float> forward(0.0f,0.0f,1.0f);
         float step = this->step * 10;

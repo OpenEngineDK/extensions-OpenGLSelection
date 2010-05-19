@@ -22,27 +22,35 @@ namespace OpenEngine {
         class Ray;
     }
     namespace Display {
-        class Viewport;
+        class IRenderCanvas;
     }
 namespace Utils {
 
+    using Geometry::Ray;
+    using Display::IRenderCanvas;
+    using Scene::ISceneNode;
+    using Math::Vector;
+
+    using std::list;
 class ISceneSelection {
 public:
     virtual ~ISceneSelection() {}
-    virtual Geometry::Ray Unproject(int x, int y, Display::Viewport& viewport) = 0;    
-    virtual Math::Vector<2,float> Project(Math::Vector<3,float> point, Display::Viewport& viewport) = 0;    
-    virtual std::list<Scene::ISceneNode*> SelectPoint(int x, int y, 
-                                                      Scene::ISceneNode* root, 
-                                                      Display::Viewport& viewport,
-                                                      Scene::ISceneNode* context = NULL) = 0;
-    virtual std::list<Scene::ISceneNode*> SelectRegion(int x1, int y1, int x2, int y2, 
-                                                       Scene::ISceneNode* root, 
-                                                       Display::Viewport& viewport,
-                                                       Scene::ISceneNode* context = NULL) = 0;
-    virtual std::list<Scene::ISceneNode*> SelectPointOrtho(int x, int y, 
-                                                           Scene::ISceneNode* root, 
-                                                           Display::Viewport& viewport,
-                                                           Scene::ISceneNode* context = NULL) = 0;
+
+    virtual Ray Unproject(int x, int y, IRenderCanvas& canvas) = 0;    
+
+    virtual Vector<2,float> Project(Vector<3,float> point, IRenderCanvas& canvas) = 0;    
+
+    virtual list<ISceneNode*> SelectPoint(int x, int y, 
+                                          IRenderCanvas& canvas,
+                                          ISceneNode* context = NULL) = 0;
+
+    virtual list<ISceneNode*> SelectRegion(int x1, int y1, int x2, int y2, 
+                                           IRenderCanvas& canvas,
+                                           ISceneNode* context = NULL) = 0;
+
+    virtual list<ISceneNode*> SelectPointOrtho(int x, int y, 
+                                               IRenderCanvas& canvas,
+                                               ISceneNode* context = NULL) = 0;
 };
 
 }

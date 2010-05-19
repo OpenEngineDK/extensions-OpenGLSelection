@@ -10,12 +10,12 @@ ADD_LIBRARY( ${EXTENSION_NAME}
   Utils/ITool.h
   Utils/SelectionTool.h
   Utils/SelectionTool.cpp
-  Utils/TransformationTool.h
-  Utils/TransformationTool.cpp
+#  Utils/TransformationTool.h
+#  Utils/TransformationTool.cpp
   Utils/CameraTool.h
   Utils/CameraTool.cpp
-  Utils/WidgetTool.h
-  Utils/WidgetTool.cpp
+#  Utils/WidgetTool.h
+#  Utils/WidgetTool.cpp
   Utils/ToolChain.h
   Utils/ToolChain.cpp
 

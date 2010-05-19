@@ -10,18 +10,17 @@
 #ifndef _OE_UTILS_POINTING_DEVICE_
 #define _OE_UTILS_POINTING_DEVICE_
 
-#include <Scene/ISceneNode.h>
-#include <Utils/ISceneSelection.h>
-#include <Utils/SelectionSet.h>
+#include <Display/IRenderCanvas.h>
 #include <list>
 
 namespace OpenEngine {
 namespace Utils {
+    using Display::IRenderCanvas;
+    using std::list;
 
 /**
  * Pointing Device Abstraction.
  * Used by ITools to determine appropriate actions.
- * @todo find out where to properly place root and select
  * @class PointingDevice PointingDevice.h OpenGLSelection/Utils/PointingDevice.h
  */
 class PointingDevice {
@@ -43,21 +42,17 @@ public:
     class EventArg {
     public:
         State state;
-        ISceneSelection& select;
-        Scene::ISceneNode* root;
         PointingDevice& pd;             // primary pointing device 
-        std::list<PointingDevice*> pds; // reserved for multiple pointing devices
-        Display::Viewport& vp;
+        list<PointingDevice*> pds; // reserved for multiple pointing devices
+        IRenderCanvas& canvas;
         EventArg(
-                 ISceneSelection& select, 
-                 Scene::ISceneNode* root, 
                  PointingDevice& pd, 
-                 Display::Viewport& vp): 
+                 IRenderCanvas& canvas 
+                 ): 
             state(pd.state), 
-            select(select), 
-            root(root), 
             pd(pd), 
-            vp(vp) {}
+            canvas(canvas) 
+        {}
         virtual ~EventArg() {};
     };
     class MovedEventArg: public EventArg {
@@ -65,31 +60,28 @@ public:
         int dx, dy;
         MovedEventArg(int dx, 
                       int dy, 
-                      ISceneSelection& select, 
-                      Scene::ISceneNode* root, 
                       PointingDevice& pd, 
-                      Display::Viewport& vp):
-            EventArg(select, root, pd, vp), dx(dx), dy(dy) {}
+                      IRenderCanvas& canvas
+                      ):
+            EventArg(pd, canvas), dx(dx), dy(dy) {}
     };
     class PressedEventArg: public EventArg  {
     public: 
         int btn;
         PressedEventArg(int btn, 
-                        ISceneSelection& select, 
-                        Scene::ISceneNode* root, 
                         PointingDevice& pd, 
-                        Display::Viewport& vp): 
-            EventArg(select, root, pd, vp), btn(btn) {}
+                        IRenderCanvas& canvas
+                        ): 
+            EventArg(pd, canvas), btn(btn) {}
     };
     class ReleasedEventArg: public EventArg  {
     public: 
         int btn;
         ReleasedEventArg(int btn, 
-                         ISceneSelection& select, 
-                         Scene::ISceneNode* root, 
                          PointingDevice& pd, 
-                         Display::Viewport& vp): 
-            EventArg(select, root, pd, vp), btn(btn) {}
+                         IRenderCanvas& canvas
+                         ): 
+            EventArg(pd, canvas), btn(btn) {}
     };
     State state;
     PointingDevice(): state (State(0, 0, 0x0, 0x0)) {};

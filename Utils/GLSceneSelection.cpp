@@ -31,16 +31,14 @@ using namespace Display;
 using namespace std;
 using namespace Geometry;
 
-GLSceneSelection::GLSceneSelection(IFrame& frame) 
-    : frame(frame)
-    , sr(new SelectionRenderer())
+GLSceneSelection::GLSceneSelection() 
+    : sr(new SelectionRenderer())
 {
     
 }
 
-GLSceneSelection::GLSceneSelection(IFrame& frame, SelectionRenderer* sr) 
-    : frame(frame) 
-    , sr(sr)
+GLSceneSelection::GLSceneSelection(SelectionRenderer* sr) 
+    : sr(sr)
 {
 
 }
@@ -49,71 +47,59 @@ GLSceneSelection::~GLSceneSelection() {
     delete sr;
 }
 
-list<ISceneNode*> GLSceneSelection::SelectPointOrtho(int x, int y, ISceneNode* root, Viewport& viewport, ISceneNode* context) {
-    Viewport vp = viewport;
-    Vector<4,int> d = vp.GetDimension();
-    OrthogonalViewingVolume ortho(1.0f, 2.0f, /*left*/d[0], /*right*/d[0]+d[2], 
-                                  /*top*/frame.GetHeight()-d[1]-d[3],
-                                  /*bottom*/frame.GetHeight()-d[1]);
-    vp.SetViewingVolume(&ortho);
-    return sr->Render (vp, root, x, frame.GetHeight()-y, 1, 1, context);
+list<ISceneNode*> GLSceneSelection::SelectPointOrtho(int x, int y, IRenderCanvas& canvas, ISceneNode* context) {
+    OrthogonalViewingVolume ortho(1.0f, 2.0f, 0, canvas.GetWidth(),
+                                  0, canvas.GetHeight());
+    return sr->Render (ortho, canvas, x, canvas.GetHeight()-y, 1, 1, context);
 }
 
-    list<ISceneNode*> GLSceneSelection::SelectPoint(int x, int y, ISceneNode* root, Viewport& viewport, ISceneNode* context) {
-    Vector<4,int> d = viewport.GetDimension();
-    // convert from local viewport coordinates
-    return sr->Render (viewport, root, x+d[0], (-1)*(y-d[3]-d[1]), 1, 1, context);
-    // return sr.Render (viewport, root, x, frame.GetHeight()-y, 1, 1);
+list<ISceneNode*> GLSceneSelection::SelectPoint(int x, int y, IRenderCanvas& canvas, ISceneNode* context) {
+    return sr->Render (*canvas.GetViewingVolume(), canvas, x, canvas.GetHeight()-y, 1, 1, context);
 }
 
 list<ISceneNode*> GLSceneSelection::SelectRegion(int x1, int y1, int x2, int y2, 
-                                                 ISceneNode* root, Viewport& viewport,
+                                                 IRenderCanvas& canvas,
                                                  ISceneNode* context) {
     if (x1 == x2 || y1 == y2) return list<ISceneNode*>();
     int width  = max(x1,x2) - min(x1,x2);
     int height = max(y1,y2) - min(y1,y2);
     int x      = max(x1,x2) - width/2;
     int y      = max(y1,y2) - height/2;
-    Vector<4,int> d = viewport.GetDimension();
-    // convert from local viewport coordinates
-    return sr->Render(viewport, root, x+d[0], (-1)*(y-d[3]-d[1]), width, height, context);
-    //return sr.Render(viewport, root, x, frame.GetHeight()-y), width, height);
+    return sr->Render(*canvas.GetViewingVolume(), canvas, x, canvas.GetHeight()-y, width, height, context);
 }
 
 
-Vector<2,float> GLSceneSelection::Project(Vector<3,float> point, Viewport& viewport) {
+Vector<2,float> GLSceneSelection::Project(Vector<3,float> point, IRenderCanvas& canvas) {
     GLdouble px, py, pz;
-    GLint vp[4];
+    GLint vp[4] = {0, 0, canvas.GetWidth(), canvas.GetHeight()};
     GLdouble proj[16];
     GLdouble model[16];
-    IViewingVolume* volume = viewport.GetViewingVolume();
+    IViewingVolume* volume = canvas.GetViewingVolume();
     // conversion from float to double
     for (int i = 0; i < 4; i++) {
-        vp[i] = viewport.GetDimension()[i];
         for (int j = 0; j < 4; j++) {
             proj[i*4+j]      = volume->GetProjectionMatrix()(i,j);
             model[i*4+j]     = volume->GetViewMatrix()(i, j);
         }
     }
     gluProject(point[0], point[1], point[2], model, proj, vp, &px, &py, &pz);
-    return Vector<2,float>(float(px), frame.GetHeight()-float(py));
+    return Vector<2,float>(float(px), float(canvas.GetHeight())-float(py));
 }
 
-Ray GLSceneSelection::Unproject(int x, int y, Viewport& viewport) {
+Ray GLSceneSelection::Unproject(int x, int y, IRenderCanvas& canvas) {
     GLdouble rx, ry, rz;
-    GLint vp[4];
+    GLint vp[4] = {0, 0, canvas.GetWidth(), canvas.GetHeight()};
     GLdouble proj[16];
     GLdouble model[16];
-    IViewingVolume* volume = viewport.GetViewingVolume();
+    IViewingVolume* volume = canvas.GetViewingVolume();
     // conversion from float to double
     for (int i = 0; i < 4; i++) {
-        vp[i] = viewport.GetDimension()[i];
         for (int j = 0; j < 4; j++) {
             proj[i*4+j]      = volume->GetProjectionMatrix()(i,j);
             model[i*4+j]     = volume->GetViewMatrix()(i, j);
         }
     }
-    gluUnProject(x, frame.GetHeight()-y, 0.0f, model, proj, vp, &rx, &ry, &rz);
+    gluUnProject(x, canvas.GetHeight()-y, 0.0f, model, proj, vp, &rx, &ry, &rz);
     Vector<3,float> p1(rx, ry, rz);
     return Ray(volume->GetPosition(), p1-volume->GetPosition());
 }
@@ -122,10 +108,10 @@ SelectionRenderer::SelectionRenderer() {
 
 }
   
-list<ISceneNode*> SelectionRenderer::Render(Viewport& viewport, 
-                                                              ISceneNode* root,
-                                                              int x, int y, int width, int height,
-                                                              ISceneNode* context) {
+list<ISceneNode*> SelectionRenderer::Render(IViewingVolume& vv,
+                                            IRenderCanvas& canvas,
+                                            int x, int y, int width, int height,
+                                            ISceneNode* context) {
     // setup gl selection
     glSelectBuffer(SELECT_BUF_SIZE, selectBuf);
     glRenderMode(GL_SELECT);
@@ -134,21 +120,23 @@ list<ISceneNode*> SelectionRenderer::Render(Viewport& viewport,
     count = 0;
     glInitNames();
     // setup projection matrix 
-    viewport.GetDimension().ToArray((int*)viewport_arr);
+    Vector<4,int> dims(0, 0, canvas.GetWidth(), canvas.GetHeight());
+    dims.ToArray((int*)viewport_arr);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    // logger.info << "render x: " << x << " y: " << y << logger.end;
     gluPickMatrix((GLdouble)x, (GLdouble)(y),
-                  width, height, viewport_arr);
-    IViewingVolume* volume = viewport.GetViewingVolume();
+                  (GLdouble)width, (GLdouble)height, viewport_arr);
+    IViewingVolume& volume = vv;
     float arr[16] = {0};
-    volume->GetProjectionMatrix().ToArray(arr);
+    volume.GetProjectionMatrix().ToArray(arr);
     glMultMatrixf(arr);
     CHECK_FOR_GL_ERROR();
     // setup model view matrix
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     // Get the view matrix and apply it
-    volume->GetViewMatrix().ToArray(arr);
+    volume.GetViewMatrix().ToArray(arr);
     glMultMatrixf(arr);
     CHECK_FOR_GL_ERROR();
     // disable expensive gl computations
@@ -160,18 +148,7 @@ list<ISceneNode*> SelectionRenderer::Render(Viewport& viewport,
     // apply ancestor matrices
     list<TransformationNode*> nodes;
     if (context) {
-        //*** UGLY CODE BEGIN ****
-        // THIS CODE CAN BE AVOIDED IF SEARCHTOOL:ANCESTORTRANSFORMATIONNODES 
-        // WOULD INCLUDE THE STARTING NODE. WE SHOULD NOT MODIFY THE CONTEXT NODE
-        // BY ADDING SOMETHING AND REMOVING IT AGAIN!
-        //@todo FIX SEARCHTOOL
-        // SearchTool st;
-        // ISceneNode* dummyNode = new SceneNode();
-        // context->AddNode(dummyNode);
         nodes = st.AncestorTransformationNodes(context,true);
-        // context->RemoveNode(dummyNode);
-        // delete dummyNode;
-        /// ****** UGLY CODE END ******
         for (list<TransformationNode*>::reverse_iterator tn = nodes.rbegin();
              tn != nodes.rend();
              tn++) {
@@ -184,7 +161,7 @@ list<ISceneNode*> SelectionRenderer::Render(Viewport& viewport,
         }
     }
     // visit scene
-    root->Accept(*this);
+    canvas.GetScene()->Accept(*this);
     for (unsigned int i = 0; i < nodes.size(); i++)
         glPopMatrix();
     glFlush();
@@ -206,14 +183,17 @@ list<ISceneNode*> SelectionRenderer::Render(Viewport& viewport,
     hittuples.sort(hit_compare);
     for (list<HitTuple>::iterator itr = hittuples.begin();
          itr != hittuples.end();
-         itr++){
+         itr++)
+        {
+            logger.info << "hit" << logger.end;
+
         hitlist.push_back((*itr).node);
     }
     return hitlist;
 }
 
 void SelectionRenderer::VisitTransformationNode(TransformationNode* node) {
-    glPushName(count++);
+    //    glPushName(count++);
     CHECK_FOR_GL_ERROR();
     names.push_back(node);
     // push transformation matrix
@@ -228,7 +208,7 @@ void SelectionRenderer::VisitTransformationNode(TransformationNode* node) {
     node->VisitSubNodes(*this);
     // pop transformation matrix
     glPopMatrix();
-    glPopName();
+    //    glPopName();
     CHECK_FOR_GL_ERROR();
 }
 
@@ -259,7 +239,7 @@ void SelectionRenderer::VisitRenderNode(RenderNode* node) {
     glPushName(count++);
     CHECK_FOR_GL_ERROR();
     names.push_back(node);
-    node->Apply(NULL);
+    // node->Apply(NULL);
     node->VisitSubNodes(*this);
     glPopName();
 }

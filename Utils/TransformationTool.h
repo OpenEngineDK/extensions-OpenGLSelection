@@ -19,6 +19,7 @@
 #include <Math/Quaternion.h>
 #include <Geometry/Plane.h>
 #include <Scene/RenderNode.h>
+#include <Scene/ISceneNodeVisitor.h>
 #include <Resources/ITexture2D.h>
 #include <Scene/SearchTool.h>
 #include <set>

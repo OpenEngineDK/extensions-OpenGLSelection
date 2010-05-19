@@ -8,11 +8,16 @@
 //--------------------------------------------------------------------
 
 #include <Utils/SelectionTool.h>
+
+#include <Utils/ISceneSelection.h>
+#include <Utils/GLSceneSelection.h>
+
 #include <Renderers/IRenderer.h>
 #include <Scene/ISceneNode.h>
 #include <Scene/TransformationNode.h>
 #include <Scene/SearchTool.h>
 #include <Display/IViewingVolume.h>
+#include <Display/OrthogonalViewingVolume.h>
 #include <Display/IFrame.h>
 #include <Math/Vector.h>
 #include <Math/Quaternion.h>
@@ -31,7 +36,11 @@ using namespace std;
 using namespace Math;
 using namespace Geometry;
     
-SelectionTool::SelectionTool(SelectionSet<ISceneNode>& ss): down_x(-1), down_y(-1), ss(ss) {}
+SelectionTool::SelectionTool(SelectionSet<ISceneNode>& ss)
+  : down_x(-1)
+  , down_y(-1)
+  , ss(ss)
+  , sceneselection(new GLSceneSelection()) {}
 
 bool SelectionTool::Handle(PointingDevice::MovedEventArg arg) {
     if (down_x == -1) return false;
@@ -55,23 +64,21 @@ bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
     switch (arg.btn) {
     case 1:
         // if we did not receive the down event...
-        if (down_x == -1) return false;
+        if (down_x == -1) return false; 
         list<ISceneNode*> selection;
         if (down_x == arg.state.x && down_y == arg.state.y) {
-            selection = arg.select.SelectPoint(down_x,
-                                               down_y,
-                                               arg.root, 
-                                               arg.vp);
+            selection = sceneselection->SelectPoint(down_x,
+                                                    down_y,
+                                                    arg.canvas);
             if (!selection.empty())
                 ss.Select(selection.front());
         }
         else {
-            selection = arg.select.SelectRegion(down_x,
-                                                down_y,
-                                                arg.state.x,
-                                                arg.state.y,
-                                                arg.root, 
-                                                arg.vp);
+            selection = sceneselection->SelectRegion(down_x,
+                                                     down_y,
+                                                     arg.state.x,
+                                                     arg.state.y,
+                                                     arg.canvas);
             ss.Select(selection);
         }
         down_x = -1;
@@ -80,16 +87,16 @@ bool SelectionTool::Handle(PointingDevice::ReleasedEventArg arg) {
     };
     return true;
 }
-    
-void SelectionTool::Render(IViewingVolume& vv, IRenderer& r) {
-}
 
-void SelectionTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r) {
-    if (down_x != -1) {
-        //draw selection region
-        if (x == 0) x = 1;
-        if (y == 0) y = 1;
-        if (down_x == 0) down_x = 1;
+ void SelectionTool::Render(IViewingVolume& vv, IRenderer& r) {
+ }
+
+ void SelectionTool::RenderOrtho(IViewingVolume& vv, IRenderer& r) {
+     if (down_x != -1) {
+         //draw selection region
+         if (x == 0) x = 1;
+         if (y == 0) y = 1;
+         if (down_x == 0) down_x = 1;
         if (down_y == 0) down_y = 1;
 
         GLfloat linew = 2.0; 
@@ -130,6 +137,14 @@ void SelectionTool::RenderOrtho(IViewingVolume& vv, Renderers::IRenderer& r) {
         glDisable(GL_BLEND);
         glDisable(GL_LINE_SMOOTH);
     }
+}
+
+void SelectionTool::Handle(Renderers::RenderingEventArg arg) {
+    OrthogonalViewingVolume ortho(1.0f, 2.0f, 
+                                  0.0, arg.canvas.GetWidth(), 
+                                  0.0, arg.canvas.GetHeight());
+    arg.renderer.ApplyViewingVolume(ortho);
+    RenderOrtho(ortho, arg.renderer);
 }
 
 } // NS Utils

@@ -17,23 +17,25 @@
 
 // selection tool utils
 #include <Utils/PointingDevice.h>
-#include <Utils/ISceneSelection.h>
 #include <Utils/ITool.h>
 // STL
-#include <list>
 #include <map>
-#include <queue>
 
 namespace OpenEngine {
     // forward declarations
     namespace Display {
-        class Viewport;
-        class IFrame;
-    }
-    namespace Scene {
-        class ISceneNode;
+        class IRenderCanvas;
     }
 namespace Utils {
+    using Display::IRenderCanvas;
+    using Devices::IMouse;
+    using Devices::IKeyboard;
+    using Devices::MouseMovedEventArg;
+    using Devices::MouseButtonEventArg;
+    using Devices::KeyboardEventArg;
+    using Renderers::RenderingEventArg;
+
+    using std::map;
 /**
  * Select objects using the mouse.
  *
@@ -44,37 +46,22 @@ class MouseSelection : public Core::IListener<Devices::MouseMovedEventArg>
                      , public Core::IListener<Devices::KeyboardEventArg>
                      , public Core::IListener<Renderers::RenderingEventArg> {
 private:
-    Display::IFrame& frame;
-    Devices::IMouse& mouse;
-    ISceneSelection* scenesel;
+    IMouse& mouse;
     PointingDevice* pd;
-    Scene::ISceneNode* root;
-    Display::Viewport* activeViewport;
-    // std::list<Display::Viewport*> viewports;
-    // std::queue<PointingDevice::EventArg*> events;
-    // std::list<ITool*> tools;
-    std::map<Display::Viewport*, ITool*> vtmap;
-    bool IsViewportActive(Display::Viewport* viewport, int x, int y);
+    IRenderCanvas* activeCanvas; // assuming disjoint canvases
+    map<IRenderCanvas*, ITool*> vtmap;
+    inline bool IsCanvasActive(IRenderCanvas* canvas, int x, int y);
 public:
-    MouseSelection(Display::IFrame& frame, 
-                   Devices::IMouse& mouse, 
-                   Scene::ISceneNode* root);
-    MouseSelection(Display::IFrame& frame, 
-                   Devices::IMouse& mouse, 
-                   Scene::ISceneNode* root,
-                   ISceneSelection* ss);
+    MouseSelection(IMouse& mouse,
+                   IKeyboard& keyboard);
     virtual ~MouseSelection();
 
-    void Handle(Devices::MouseMovedEventArg arg);
-    void Handle(Devices::MouseButtonEventArg arg);
-    void Handle(Devices::KeyboardEventArg arg);
-    void Handle(Renderers::RenderingEventArg arg);
+    void Handle(MouseMovedEventArg arg);
+    void Handle(MouseButtonEventArg arg);
+    void Handle(KeyboardEventArg arg);
+    void Handle(RenderingEventArg arg);
 
-    // void AddViewport(Display::Viewport* viewport);
-    // void AddTool(ITool* tool);
-
-    void BindTool(Display::Viewport* vp, ITool* t);
-    void SetScene(Scene::ISceneNode* scene);
+    void BindTool(IRenderCanvas* canvas, ITool* tool);
 };
 
 } // NS Utils

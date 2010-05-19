@@ -14,25 +14,30 @@
 #include <Utils/PointingDevice.h>
 #include <Scene/ISceneNodeVisitor.h>
 #include <Utils/SelectionSet.h>
+#include <Renderers/IRenderer.h>
+#include <Core/IListener.h>
 
 namespace OpenEngine {
     namespace Renderers {
-        class IRenderer;
+        //class IRenderer;
     }
     namespace Display {
         class IViewingVolume;
     }
 namespace Utils {
 
+    class ISceneSelection;
+    
 /**
  * Selection Tool
  * 
  * @class SelectionTool SelectionTool.h OpenGLSelection/Utils/SelectionTool.h
  */
-class SelectionTool : public ITool {
+class SelectionTool : public ITool, public Core::IListener<Renderers::RenderingEventArg> {
 private:
     int x, y, down_x, down_y;
     SelectionSet<Scene::ISceneNode>& ss;
+    ISceneSelection* sceneselection;
 public:
     SelectionTool(SelectionSet<Scene::ISceneNode>& ss);
     bool Handle(PointingDevice::MovedEventArg arg);
@@ -40,6 +45,7 @@ public:
     bool Handle(PointingDevice::ReleasedEventArg arg);
     void Render(Display::IViewingVolume& vv, Renderers::IRenderer& r);
     void RenderOrtho(Display::IViewingVolume& vv, Renderers::IRenderer& r);
+    void Handle(Renderers::RenderingEventArg arg);
 };
 
 } // NS Utils
