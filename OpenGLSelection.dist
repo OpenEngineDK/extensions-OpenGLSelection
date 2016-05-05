@@ -1,3 +1,3 @@
 # source
-darcs /extensions/OpenGLSelection    http://openengine.dk/code/extensions/OpenGLSelection
-darcs-dev /extensions/OpenGLSelection    fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLSelection
+git /extensions/OpenGLSelection    https://github.com/OpenEngineDK/extensions-OpenGLSelection.git
+git-dev /extensions/OpenGLSelection    git@github.com:OpenEngineDK/extensions-OpenGLSelection.git
